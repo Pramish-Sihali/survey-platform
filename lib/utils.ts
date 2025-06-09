@@ -1,0 +1,31 @@
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+// Form step types
+export interface FormStep {
+  id: string
+  title: string
+  questions: Question[]
+}
+
+export interface Question {
+  id: string
+  type: 'text' | 'select' | 'radio' | 'checkbox' | 'rating' | 'yes_no'
+  question: string
+  required: boolean
+  options?: string[]
+  hasOther?: boolean
+  section?: string
+}
+
+export interface EmployeeInfo {
+  name: string
+  designation: string
+  department: string
+  supervisor: string
+  reportsTo: string
+}
