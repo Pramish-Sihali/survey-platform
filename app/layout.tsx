@@ -1,48 +1,18 @@
 import type { Metadata } from 'next'
-import localFont from 'next/font/local'
+import { Ubuntu, Ubuntu_Mono } from 'next/font/google'
 import './globals.css'
 
-// Load Ubuntu fonts from public/fonts directory
-const ubuntu = localFont({
-  src: [
-    {
-      path: '../public/fonts/Ubuntu-L.ttf',
-      weight: '300',
-      style: 'normal',
-    },
-    {
-      path: '../public/fonts/Ubuntu-R.ttf',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: '../public/fonts/Ubuntu-M.ttf',
-      weight: '500',
-      style: 'normal',
-    },
-    {
-      path: '../public/fonts/Ubuntu-B.ttf',
-      weight: '700',
-      style: 'normal',
-    },
-  ],
+// Load Ubuntu fonts from Google Fonts
+const ubuntu = Ubuntu({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700'],
   variable: '--font-ubuntu',
   display: 'swap',
 })
 
-const ubuntuMono = localFont({
-  src: [
-    {
-      path: '../public/fonts/UbuntuMono-R.ttf',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: '../public/fonts/UbuntuMono-B.ttf',
-      weight: '700',
-      style: 'normal',
-    },
-  ],
+const ubuntuMono = Ubuntu_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
   variable: '--font-ubuntu-mono',
   display: 'swap',
 })
@@ -58,8 +28,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`min-h-screen antialiased ${ubuntu.variable} ${ubuntuMono.variable} font-sans`}>
+    <html lang="en" className={`${ubuntu.variable} ${ubuntuMono.variable}`}>
+      <body className="min-h-screen antialiased font-sans">
         {children}
       </body>
     </html>

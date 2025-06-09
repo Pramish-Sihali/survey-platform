@@ -29,3 +29,15 @@ export interface EmployeeInfo {
   supervisor: string
   reportsTo: string
 }
+
+// Analytics types
+export interface QuestionAnalytics {
+  id: string
+  question: string
+  type: string
+  responses: number
+  avgRating?: number
+  distribution?: number[]
+  yesCount?: number
+  noCount?: number
+}
