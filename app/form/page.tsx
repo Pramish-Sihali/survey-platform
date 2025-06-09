@@ -101,8 +101,8 @@ export default function FormPage() {
     checkFormStatus()
   }, [])
 
-  const totalSteps = mockFormSteps.length + 1 // +1 for employee info step
-  const progress = ((currentStep + 1) / (totalSteps + 1)) * 100
+  const totalSteps = mockFormSteps.length // Number of question sections
+  const progress = ((currentStep + 1) / (totalSteps + 2)) * 100 // +2 for employee info + completion
 
   const handleEmployeeInfoSubmit = (info: EmployeeInfo) => {
     setEmployeeInfo(info)
@@ -140,9 +140,30 @@ export default function FormPage() {
     }
     
     const step = mockFormSteps[stepIndex - 1]
+    if (!step || !step.questions) return false
+    
     return step.questions.every(q => {
       if (!q.required) return true
-      return formResponses[q.id] !== undefined && formResponses[q.id] !== ''
+      
+      const response = formResponses[q.id]
+      
+      // Handle undefined/empty responses
+      if (response === undefined || response === null || response === '') {
+        return false
+      }
+      
+      // Handle object responses (with main/other structure)
+      if (typeof response === 'object' && response.main !== undefined) {
+        return response.main !== '' && response.main !== undefined
+      }
+      
+      // Handle array responses (checkboxes)
+      if (Array.isArray(response)) {
+        return response.length > 0
+      }
+      
+      // Handle simple string/number responses
+      return true
     })
   }
 
@@ -184,7 +205,7 @@ export default function FormPage() {
               </span>
             </Link>
             <div className="text-sm text-muted-foreground">
-              Step {currentStep + 1} of {totalSteps + 1}
+              Step {currentStep + 1} of {totalSteps + 2}
             </div>
           </div>
         </div>

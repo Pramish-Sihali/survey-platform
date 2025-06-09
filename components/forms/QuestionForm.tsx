@@ -34,10 +34,34 @@ export function QuestionForm({
 }: QuestionFormProps) {
   const [otherInputs, setOtherInputs] = useState<Record<string, string>>({})
 
-  const handleOtherChange = (questionId: string, value: string) => {
+  // Safety check for undefined step
+  if (!step || !step.questions) {
+    return (
+      <Card className="w-full max-w-3xl mx-auto">
+        <CardContent className="text-center p-8">
+          <p className="text-muted-foreground">Loading questions...</p>
+        </CardContent>
+      </Card>
+    )
+  }  const handleOtherChange = (questionId: string, value: string) => {
     setOtherInputs(prev => ({ ...prev, [questionId]: value }))
-    if (value.trim()) {
-      onResponseChange(questionId, { main: responses[questionId]?.main, other: value })
+    const currentResponse = responses[questionId]
+    
+    // Find the question to determine its type
+    const question = step.questions.find(q => q.id === questionId)
+    
+    if (question?.type === 'checkbox') {
+      // For checkboxes, keep the array response and add other separately
+      // This is handled differently as checkboxes are arrays
+      return
+    }
+    
+    if (typeof currentResponse === 'object' && currentResponse !== null && !Array.isArray(currentResponse)) {
+      // If current response is an object, update the other field
+      onResponseChange(questionId, { ...currentResponse, other: value })
+    } else if (currentResponse) {
+      // If current response is a simple value, convert to object
+      onResponseChange(questionId, { main: currentResponse, other: value })
     }
   }
 
@@ -64,7 +88,8 @@ export function QuestionForm({
               value={response?.main || response || ''}
               onValueChange={(value) => {
                 if (question.hasOther) {
-                  onResponseChange(question.id, { main: value, other: otherInputs[question.id] || '' })
+                  const otherText = otherInputs[question.id] || ''
+                  onResponseChange(question.id, { main: value, other: otherText })
                 } else {
                   onResponseChange(question.id, value)
                 }
@@ -88,7 +113,7 @@ export function QuestionForm({
                 <Input
                   id={`${question.id}-other`}
                   placeholder="Please explain..."
-                  value={otherInputs[question.id] || ''}
+                  value={otherInputs[question.id] || response?.other || ''}
                   onChange={(e) => handleOtherChange(question.id, e.target.value)}
                   className="mt-2"
                 />
@@ -104,7 +129,8 @@ export function QuestionForm({
               value={response?.main || response || ''}
               onValueChange={(value) => {
                 if (question.hasOther) {
-                  onResponseChange(question.id, { main: value, other: otherInputs[question.id] || '' })
+                  const otherText = otherInputs[question.id] || ''
+                  onResponseChange(question.id, { main: value, other: otherText })
                 } else {
                   onResponseChange(question.id, value)
                 }
@@ -126,7 +152,7 @@ export function QuestionForm({
                 <Input
                   id={`${question.id}-other`}
                   placeholder="Please specify..."
-                  value={otherInputs[question.id] || ''}
+                  value={otherInputs[question.id] || response?.other || ''}
                   onChange={(e) => handleOtherChange(question.id, e.target.value)}
                   className="mt-2"
                 />
@@ -180,6 +206,7 @@ export function QuestionForm({
         )
 
       case 'rating':
+        const ratingValue = response?.main || response
         return (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -188,10 +215,17 @@ export function QuestionForm({
                   <button
                     key={rating}
                     type="button"
-                    onClick={() => onResponseChange(question.id, rating)}
+                    onClick={() => {
+                      if (question.hasOther) {
+                        const otherText = otherInputs[question.id] || response?.other || ''
+                        onResponseChange(question.id, { main: rating, other: otherText })
+                      } else {
+                        onResponseChange(question.id, rating)
+                      }
+                    }}
                     className={cn(
                       "p-2 rounded-lg border-2 transition-all hover:scale-105",
-                      response === rating
+                      ratingValue === rating
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-muted-foreground/30 hover:border-primary/50"
                     )}
@@ -199,16 +233,16 @@ export function QuestionForm({
                     <Star 
                       className={cn(
                         "h-6 w-6",
-                        response === rating ? "fill-current" : ""
+                        ratingValue === rating ? "fill-current" : ""
                       )} 
                     />
                   </button>
                 ))}
               </div>
               <div className="text-sm text-muted-foreground">
-                {response && RATING_LABELS[response - 1] && (
+                {ratingValue && RATING_LABELS[ratingValue - 1] && (
                   <span className="font-medium text-foreground">
-                    {RATING_LABELS[response - 1]}
+                    {RATING_LABELS[ratingValue - 1]}
                   </span>
                 )}
               </div>
@@ -228,7 +262,7 @@ export function QuestionForm({
                 <Input
                   id={`${question.id}-other`}
                   placeholder="Please explain your rating..."
-                  value={otherInputs[question.id] || ''}
+                  value={otherInputs[question.id] || response?.other || ''}
                   onChange={(e) => handleOtherChange(question.id, e.target.value)}
                   className="mt-2"
                 />
@@ -244,7 +278,8 @@ export function QuestionForm({
               value={response?.main || response || ''}
               onValueChange={(value) => {
                 if (question.hasOther) {
-                  onResponseChange(question.id, { main: value, other: otherInputs[question.id] || '' })
+                  const otherText = otherInputs[question.id] || ''
+                  onResponseChange(question.id, { main: value, other: otherText })
                 } else {
                   onResponseChange(question.id, value)
                 }
@@ -270,7 +305,7 @@ export function QuestionForm({
                 <Input
                   id={`${question.id}-other`}
                   placeholder="Please specify..."
-                  value={otherInputs[question.id] || ''}
+                  value={otherInputs[question.id] || response?.other || ''}
                   onChange={(e) => handleOtherChange(question.id, e.target.value)}
                   className="mt-2"
                 />
