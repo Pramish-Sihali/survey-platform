@@ -6,13 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FormStep, Question } from '@/lib/utils'
+import { FormStep, Question, FormResponses, FormResponseValue } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
 interface QuestionFormProps {
   step: FormStep
-  responses: Record<string, any>
-  onResponseChange: (questionId: string, response: any) => void
+  responses: FormResponses
+  onResponseChange: (questionId: string, response: FormResponseValue) => void
   onNext: () => void
   onPrev: () => void
   onSubmit?: () => void
@@ -43,7 +43,9 @@ export function QuestionForm({
         </CardContent>
       </Card>
     )
-  }  const handleOtherChange = (questionId: string, value: string) => {
+  }
+
+  const handleOtherChange = (questionId: string, value: string) => {
     setOtherInputs(prev => ({ ...prev, [questionId]: value }))
     const currentResponse = responses[questionId]
     
@@ -61,7 +63,7 @@ export function QuestionForm({
       onResponseChange(questionId, { ...currentResponse, other: value })
     } else if (currentResponse) {
       // If current response is a simple value, convert to object
-      onResponseChange(questionId, { main: currentResponse, other: value })
+      onResponseChange(questionId, { main: currentResponse as string | number, other: value })
     }
   }
 
@@ -74,7 +76,7 @@ export function QuestionForm({
           <div className="space-y-3">
             <Input
               placeholder="Enter your response..."
-              value={response || ''}
+              value={(response as string) || ''}
               onChange={(e) => onResponseChange(question.id, e.target.value)}
               className="w-full"
             />
@@ -85,7 +87,7 @@ export function QuestionForm({
         return (
           <div className="space-y-4">
             <RadioGroup
-              value={response?.main || response || ''}
+              value={(response as { main: string })?.main || (response as string) || ''}
               onValueChange={(value) => {
                 if (question.hasOther) {
                   const otherText = otherInputs[question.id] || ''
@@ -113,7 +115,7 @@ export function QuestionForm({
                 <Input
                   id={`${question.id}-other`}
                   placeholder="Please explain..."
-                  value={otherInputs[question.id] || response?.other || ''}
+                  value={otherInputs[question.id] || (response as { other?: string })?.other || ''}
                   onChange={(e) => handleOtherChange(question.id, e.target.value)}
                   className="mt-2"
                 />
@@ -126,7 +128,7 @@ export function QuestionForm({
         return (
           <div className="space-y-4">
             <RadioGroup
-              value={response?.main || response || ''}
+              value={(response as { main: string })?.main || (response as string) || ''}
               onValueChange={(value) => {
                 if (question.hasOther) {
                   const otherText = otherInputs[question.id] || ''
@@ -152,7 +154,7 @@ export function QuestionForm({
                 <Input
                   id={`${question.id}-other`}
                   placeholder="Please specify..."
-                  value={otherInputs[question.id] || response?.other || ''}
+                  value={otherInputs[question.id] || (response as { other?: string })?.other || ''}
                   onChange={(e) => handleOtherChange(question.id, e.target.value)}
                   className="mt-2"
                 />
@@ -173,7 +175,7 @@ export function QuestionForm({
                     id={`${question.id}-${index}`}
                     checked={checkboxResponse.includes(option)}
                     onChange={(e) => {
-                      let newResponse
+                      let newResponse: string[]
                       if (e.target.checked) {
                         newResponse = [...checkboxResponse, option]
                       } else {
@@ -206,7 +208,7 @@ export function QuestionForm({
         )
 
       case 'rating':
-        const ratingValue = response?.main || response
+        const ratingValue = (response as { main: number })?.main || (response as number)
         return (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -217,7 +219,7 @@ export function QuestionForm({
                     type="button"
                     onClick={() => {
                       if (question.hasOther) {
-                        const otherText = otherInputs[question.id] || response?.other || ''
+                        const otherText = otherInputs[question.id] || (response as { other?: string })?.other || ''
                         onResponseChange(question.id, { main: rating, other: otherText })
                       } else {
                         onResponseChange(question.id, rating)
@@ -262,7 +264,7 @@ export function QuestionForm({
                 <Input
                   id={`${question.id}-other`}
                   placeholder="Please explain your rating..."
-                  value={otherInputs[question.id] || response?.other || ''}
+                  value={otherInputs[question.id] || (response as { other?: string })?.other || ''}
                   onChange={(e) => handleOtherChange(question.id, e.target.value)}
                   className="mt-2"
                 />
@@ -275,7 +277,7 @@ export function QuestionForm({
         return (
           <div className="space-y-4">
             <Select
-              value={response?.main || response || ''}
+              value={(response as { main: string })?.main || (response as string) || ''}
               onValueChange={(value) => {
                 if (question.hasOther) {
                   const otherText = otherInputs[question.id] || ''
@@ -305,7 +307,7 @@ export function QuestionForm({
                 <Input
                   id={`${question.id}-other`}
                   placeholder="Please specify..."
-                  value={otherInputs[question.id] || response?.other || ''}
+                  value={otherInputs[question.id] || (response as { other?: string })?.other || ''}
                   onChange={(e) => handleOtherChange(question.id, e.target.value)}
                   className="mt-2"
                 />

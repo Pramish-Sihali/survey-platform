@@ -4,11 +4,10 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Edit, Trash2, GripVertical, Settings, Save, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent,  CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { FormStep, Question } from '@/lib/utils'
 
 // Mock data - this would come from your backend
@@ -170,7 +169,7 @@ function QuestionForm({ question, onSave, onCancel }: QuestionFormProps) {
                     onChange={(e) => setFormData(prev => ({ ...prev, hasOther: e.target.checked }))}
                     className="rounded border-primary text-primary focus:ring-primary"
                   />
-                  <Label htmlFor="hasOther" className="text-sm">Include "Other" option</Label>
+                  <Label htmlFor="hasOther" className="text-sm">Include &ldquo;Other&ldquo; option</Label>
                 </div>
               </div>
             </div>
@@ -353,7 +352,7 @@ export default function QuestionsPage() {
 
         {/* Sections */}
         <div className="space-y-6">
-          {sections.map((section, sectionIndex) => (
+          {sections.map((section) => (
             <Card key={section.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -414,7 +413,7 @@ export default function QuestionsPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {section.questions.map((question, questionIndex) => (
+                    {section.questions.map((question) => (
                       <div key={question.id} className="flex items-start gap-3 p-4 border rounded-lg">
                         <GripVertical className="h-5 w-5 text-muted-foreground mt-1" />
                         <div className="flex-1">

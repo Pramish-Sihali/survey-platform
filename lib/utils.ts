@@ -30,6 +30,14 @@ export interface EmployeeInfo {
   reportsTo: string
 }
 
+// Form response types
+export type FormResponseValue = 
+  | string 
+  | number 
+  | string[] 
+  | { main: string | number; other?: string }
+
+export type FormResponses = Record<string, FormResponseValue>
 // Analytics types
 export interface QuestionAnalytics {
   id: string

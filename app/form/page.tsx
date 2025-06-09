@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { EmployeeInfoForm } from '@/components/forms/EmployeeInfoForm'
 import { QuestionForm } from '@/components/forms/QuestionForm'
 import { FormComplete } from '@/components/forms/FormComplete'
-import { EmployeeInfo, FormStep } from '@/lib/utils'
+import { EmployeeInfo, FormStep, FormResponses, FormResponseValue } from '@/lib/utils'
 
 // Mock data - this would come from your backend
 const mockFormSteps: FormStep[] = [
@@ -89,8 +89,8 @@ export default function FormPage() {
     supervisor: '',
     reportsTo: '',
   })
-  const [formResponses, setFormResponses] = useState<Record<string, any>>({})
-  const [isFormClosed, setIsFormClosed] = useState(false)
+  const [formResponses, setFormResponses] = useState<FormResponses>({})
+  const [isFormClosed] = useState(false)
 
   // Check if form is closed (this would come from your backend)
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function FormPage() {
     setCurrentStep(1)
   }
 
-  const handleQuestionResponse = (questionId: string, response: any) => {
+  const handleQuestionResponse = (questionId: string, response: FormResponseValue) => {
     setFormResponses(prev => ({
       ...prev,
       [questionId]: response
@@ -153,7 +153,7 @@ export default function FormPage() {
       }
       
       // Handle object responses (with main/other structure)
-      if (typeof response === 'object' && response.main !== undefined) {
+      if (typeof response === 'object' && response !== null && !Array.isArray(response) && 'main' in response) {
         return response.main !== '' && response.main !== undefined
       }
       

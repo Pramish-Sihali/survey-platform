@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CheckCircle, Home, ArrowLeft } from 'lucide-react'
+import { CheckCircle, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmployeeInfo } from '@/lib/utils'
