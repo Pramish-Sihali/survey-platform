@@ -1,25 +1,11 @@
-import { useState } from 'react'
-import { ArrowRight, User } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { ArrowRight, User, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { EmployeeInfo } from '@/lib/utils'
-
-// Mock departments - this would come from your backend/admin settings
-const DEPARTMENTS = [
-  'Human Resources',
-  'Engineering',
-  'Marketing',
-  'Sales',
-  'Finance',
-  'Operations',
-  'Customer Service',
-  'Legal',
-  'IT Support',
-  'Research & Development'
-]
+import { EmployeeInfo, Department, ApiClient } from '@/lib/utils'
 
 interface EmployeeInfoFormProps {
   employeeInfo: EmployeeInfo
@@ -29,16 +15,52 @@ interface EmployeeInfoFormProps {
 
 export function EmployeeInfoForm({ employeeInfo, setEmployeeInfo, onSubmit }: EmployeeInfoFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [loadingDepartments, setLoadingDepartments] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setLoadingDepartments(true)
+        const response = await ApiClient.getDepartments()
+        setDepartments(response.departments || [])
+      } catch (err) {
+        console.error('Error fetching departments:', err)
+        // Fallback to hardcoded departments if API fails
+        setDepartments([
+          { id: '1', name: 'Human Resources', description: 'HR Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '2', name: 'Engineering', description: 'Engineering Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '3', name: 'Marketing', description: 'Marketing Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '4', name: 'Sales', description: 'Sales Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '5', name: 'Finance', description: 'Finance Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '6', name: 'Operations', description: 'Operations Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '7', name: 'Customer Service', description: 'Customer Service Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '8', name: 'Legal', description: 'Legal Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '9', name: 'IT Support', description: 'IT Support Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '10', name: 'Research & Development', description: 'R&D Department', is_active: true, created_at: '', updated_at: '' }
+        ])
+      } finally {
+        setLoadingDepartments(false)
+      }
+    }
+
+    fetchDepartments()
+  }, [])
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
     if (!employeeInfo.name.trim()) {
       newErrors.name = 'Name is required'
+    } else if (employeeInfo.name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters'
     }
 
     if (!employeeInfo.designation.trim()) {
       newErrors.designation = 'Designation is required'
+    } else if (employeeInfo.designation.trim().length < 2) {
+      newErrors.designation = 'Designation must be at least 2 characters'
     }
 
     if (!employeeInfo.department.trim()) {
@@ -47,20 +69,34 @@ export function EmployeeInfoForm({ employeeInfo, setEmployeeInfo, onSubmit }: Em
 
     if (!employeeInfo.supervisor.trim()) {
       newErrors.supervisor = 'Supervisor is required'
+    } else if (employeeInfo.supervisor.trim().length < 2) {
+      newErrors.supervisor = 'Supervisor name must be at least 2 characters'
     }
 
     if (!employeeInfo.reportsTo.trim()) {
       newErrors.reportsTo = 'Reports To is required'
+    } else if (employeeInfo.reportsTo.trim().length < 2) {
+      newErrors.reportsTo = 'Reports To must be at least 2 characters'
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (validateForm()) {
+    
+    if (!validateForm()) {
+      return
+    }
+
+    try {
+      setSubmitting(true)
       onSubmit(employeeInfo)
+    } catch (err) {
+      console.error('Error submitting employee info:', err)
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -96,6 +132,8 @@ export function EmployeeInfoForm({ employeeInfo, setEmployeeInfo, onSubmit }: Em
                 value={employeeInfo.name}
                 onChange={(e) => updateField('name', e.target.value)}
                 className={errors.name ? 'border-destructive' : ''}
+                disabled={submitting}
+                autoComplete="name"
               />
               {errors.name && (
                 <p className="text-sm text-destructive">{errors.name}</p>
@@ -110,6 +148,8 @@ export function EmployeeInfoForm({ employeeInfo, setEmployeeInfo, onSubmit }: Em
                 value={employeeInfo.designation}
                 onChange={(e) => updateField('designation', e.target.value)}
                 className={errors.designation ? 'border-destructive' : ''}
+                disabled={submitting}
+                autoComplete="organization-title"
               />
               {errors.designation && (
                 <p className="text-sm text-destructive">{errors.designation}</p>
@@ -118,21 +158,29 @@ export function EmployeeInfoForm({ employeeInfo, setEmployeeInfo, onSubmit }: Em
 
             <div className="space-y-2">
               <Label htmlFor="department">Department *</Label>
-              <Select 
-                value={employeeInfo.department} 
-                onValueChange={(value) => updateField('department', value)}
-              >
-                <SelectTrigger className={errors.department ? 'border-destructive' : ''}>
-                  <SelectValue placeholder="Select your department" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DEPARTMENTS.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {loadingDepartments ? (
+                <div className="flex items-center space-x-2 p-3 border rounded-md">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm text-muted-foreground">Loading departments...</span>
+                </div>
+              ) : (
+                <Select 
+                  value={employeeInfo.department} 
+                  onValueChange={(value) => updateField('department', value)}
+                  disabled={submitting}
+                >
+                  <SelectTrigger className={errors.department ? 'border-destructive' : ''}>
+                    <SelectValue placeholder="Select your department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.name}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               {errors.department && (
                 <p className="text-sm text-destructive">{errors.department}</p>
               )}
@@ -146,6 +194,7 @@ export function EmployeeInfoForm({ employeeInfo, setEmployeeInfo, onSubmit }: Em
                 value={employeeInfo.supervisor}
                 onChange={(e) => updateField('supervisor', e.target.value)}
                 className={errors.supervisor ? 'border-destructive' : ''}
+                disabled={submitting}
               />
               {errors.supervisor && (
                 <p className="text-sm text-destructive">{errors.supervisor}</p>
@@ -160,24 +209,42 @@ export function EmployeeInfoForm({ employeeInfo, setEmployeeInfo, onSubmit }: Em
                 value={employeeInfo.reportsTo}
                 onChange={(e) => updateField('reportsTo', e.target.value)}
                 className={errors.reportsTo ? 'border-destructive' : ''}
+                disabled={submitting}
               />
               {errors.reportsTo && (
                 <p className="text-sm text-destructive">{errors.reportsTo}</p>
               )}
+              <p className="text-xs text-muted-foreground">
+                This may be the same as your immediate supervisor or a higher-level manager
+              </p>
             </div>
           </div>
 
           <div className="bg-muted/50 p-4 rounded-lg">
             <p className="text-sm text-muted-foreground">
               <strong>Privacy Notice:</strong> Your information will be kept confidential and used only for survey analysis. 
-              Individual responses will not be shared with management without aggregation.
+              Individual responses will not be shared with management without aggregation. All data is stored securely and in compliance with privacy regulations.
             </p>
           </div>
 
           <div className="flex justify-end">
-            <Button type="submit" size="lg" className="px-8">
-              Continue to Survey
-              <ArrowRight className="ml-2 h-5 w-5" />
+            <Button 
+              type="submit" 
+              size="lg" 
+              className="px-8"
+              disabled={submitting || loadingDepartments}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Continue to Survey
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
             </Button>
           </div>
         </form>

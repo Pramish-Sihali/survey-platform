@@ -1,14 +1,15 @@
 import Link from 'next/link'
-import { CheckCircle, Home } from 'lucide-react'
+import { CheckCircle, Home, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmployeeInfo } from '@/lib/utils'
 
 interface FormCompleteProps {
   employeeInfo: EmployeeInfo
+  surveyTitle?: string
 }
 
-export function FormComplete({ employeeInfo }: FormCompleteProps) {
+export function FormComplete({ employeeInfo, surveyTitle }: FormCompleteProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
       <Card className="w-full max-w-2xl mx-auto">
@@ -43,6 +44,12 @@ export function FormComplete({ employeeInfo }: FormCompleteProps) {
                 <span className="text-muted-foreground">Submitted:</span>
                 <p className="font-medium">{new Date().toLocaleDateString()}</p>
               </div>
+              {surveyTitle && (
+                <div className="sm:col-span-2">
+                  <span className="text-muted-foreground">Survey:</span>
+                  <p className="font-medium">{surveyTitle}</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -74,19 +81,18 @@ export function FormComplete({ employeeInfo }: FormCompleteProps) {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/">
+              <Link href="/surveys">
                 <Button variant="outline" className="w-full sm:w-auto">
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  Take Another Survey
+                </Button>
+              </Link>
+              <Link href="/">
+                <Button className="w-full sm:w-auto">
                   <Home className="mr-2 h-4 w-4" />
                   Return Home
                 </Button>
               </Link>
-              <Button 
-                variant="ghost" 
-                onClick={() => window.print()}
-                className="w-full sm:w-auto"
-              >
-                Print Confirmation
-              </Button>
             </div>
           </div>
 

@@ -1,263 +1,187 @@
 import Link from 'next/link'
-import { ArrowRight, ClipboardList, Users, BarChart3, Shield, Star, TrendingUp, Zap, CheckCircle } from 'lucide-react'
+import { ClipboardList, BarChart3, Settings, ArrowRight, Users, Shield, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary-50/30 to-secondary-50/20">
+    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
       {/* Navigation */}
-      <nav className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+      <nav className="border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="flex items-center space-x-2">
+              <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-xl">i</span>
               </div>
               <span className="text-3xl font-bold text-foreground">
-                <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">IXI</span>corp
+                <span className="text-primary">IXI</span>corp Survey Platform
               </span>
             </div>
-            <Link href="/admin">
-              <Button variant="outline" size="sm" className="hover:bg-primary/10 transition-all duration-300">
-                Admin Portal
-              </Button>
-            </Link>
+            <div className="flex items-center space-x-2">
+              <Link href="/admin">
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Admin
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative py-24 px-4 overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]"></div>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full blur-3xl"></div>
-        
-        <div className="container mx-auto text-center max-w-5xl relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm font-medium text-primary mb-8 animate-pulse">
-            <Star className="h-4 w-4" />
-            Trusted by 500+ organizations worldwide
-          </div>
-          
-          <h1 className="text-6xl md:text-7xl font-bold text-foreground mb-8 leading-tight">
-            Employee{' '}
-            <span className="bg-gradient-to-r from-primary via-primary-600 to-secondary bg-clip-text text-transparent">
-              Feedback
-            </span>{' '}
-            <br />
-            Platform
+      <div className="container mx-auto px-4 py-16 max-w-6xl">
+        <div className="text-center mb-16">
+          <h1 className="text-5xl font-bold text-foreground mb-6 leading-tight">
+            Professional Survey &<br />
+            <span className="text-primary">Feedback Platform</span>
           </h1>
-          
-          <p className="text-xl md:text-2xl text-muted-foreground mb-12 leading-relaxed max-w-3xl mx-auto">
-            Streamlined survey collection and analytics designed for modern organizations. 
-            Gather meaningful insights from your team with our intuitive, secure platform.
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+            Streamline your organization's feedback collection with our comprehensive survey platform. 
+            Gather insights, analyze data, and drive meaningful improvements across your teams.
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <Link href="/form">
-              <Button size="lg" className="text-lg px-10 py-7 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-r from-primary to-primary-600">
-                Start Survey <ArrowRight className="ml-2 h-6 w-6" />
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/surveys">
+              <Button size="lg" className="px-8 py-6 text-lg">
+                <ClipboardList className="mr-2 h-6 w-6" />
+                Take a Survey
+                <ArrowRight className="ml-2 h-6 w-6" />
               </Button>
             </Link>
-            <Button variant="outline" size="lg" className="text-lg px-10 py-7 rounded-xl hover:bg-primary/5 transition-all duration-300">
-              Watch Demo
-            </Button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20 max-w-2xl mx-auto">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2">98%</div>
-              <div className="text-sm text-muted-foreground">Response Rate</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-secondary mb-2">2.5M+</div>
-              <div className="text-sm text-muted-foreground">Surveys Completed</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2">15min</div>
-              <div className="text-sm text-muted-foreground">Average Setup</div>
-            </div>
+            <Link href="/admin">
+              <Button size="lg" variant="outline" className="px-8 py-6 text-lg">
+                <BarChart3 className="mr-2 h-6 w-6" />
+                View Analytics
+              </Button>
+            </Link>
           </div>
         </div>
-      </section>
 
-      {/* Features Section */}
-      <section className="py-24 px-4 bg-background/50">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Why Choose <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">IXI</span> Survey Platform?
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Built for the modern workplace with features that matter most to HR teams and employees alike.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br from-background to-primary-50/30">
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-secondary to-secondary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <ClipboardList className="h-8 w-8 text-secondary-foreground" />
-                </div>
-                <CardTitle className="text-xl">Smart Forms</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center leading-relaxed">
-                  Dynamic question types with intelligent branching and validation for comprehensive data collection.
-                </CardDescription>
-              </CardContent>
-            </Card>
+        {/* Features Section */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          <Card className="hover:shadow-lg transition-all duration-300">
+            <CardHeader>
+              <ClipboardList className="h-12 w-12 text-primary mb-4" />
+              <CardTitle className="text-xl">Smart Survey Builder</CardTitle>
+              <CardDescription>
+                Create comprehensive surveys with multiple question types, sections, and advanced logic
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li>• Multiple question types (rating, text, multiple choice)</li>
+                <li>• Conditional logic and branching</li>
+                <li>• Section-based organization</li>
+                <li>• Mobile-responsive design</li>
+              </ul>
+            </CardContent>
+          </Card>
 
-            <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br from-background to-primary-50/30">
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Users className="h-8 w-8 text-primary-foreground" />
-                </div>
-                <CardTitle className="text-xl">Employee Focused</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center leading-relaxed">
-                  Designed specifically for employee feedback with department tracking and role-based insights.
-                </CardDescription>
-              </CardContent>
-            </Card>
+          <Card className="hover:shadow-lg transition-all duration-300">
+            <CardHeader>
+              <BarChart3 className="h-12 w-12 text-secondary mb-4" />
+              <CardTitle className="text-xl">Real-time Analytics</CardTitle>
+              <CardDescription>
+                Get instant insights with comprehensive analytics and beautiful visualizations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li>• Live response tracking</li>
+                <li>• Department-wise breakdowns</li>
+                <li>• Interactive charts and graphs</li>
+                <li>• Export capabilities</li>
+              </ul>
+            </CardContent>
+          </Card>
 
-            <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br from-background to-secondary-50/30">
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-secondary to-secondary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <BarChart3 className="h-8 w-8 text-secondary-foreground" />
-                </div>
-                <CardTitle className="text-xl">Real-time Analytics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center leading-relaxed">
-                  Instant insights with visual charts and comprehensive reporting for data-driven decisions.
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="border-none shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br from-background to-primary-50/30">
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Shield className="h-8 w-8 text-primary-foreground" />
-                </div>
-                <CardTitle className="text-xl">Secure & Professional</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center leading-relaxed">
-                  Enterprise-grade security with clean, professional interface that employees trust.
-                </CardDescription>
-              </CardContent>
-            </Card>
-          </div>
+          <Card className="hover:shadow-lg transition-all duration-300">
+            <CardHeader>
+              <Shield className="h-12 w-12 text-primary mb-4" />
+              <CardTitle className="text-xl">Enterprise Security</CardTitle>
+              <CardDescription>
+                Built with privacy and security in mind to protect sensitive employee feedback
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li>• Anonymous response options</li>
+                <li>• Secure data encryption</li>
+                <li>• GDPR compliant</li>
+                <li>• Role-based access control</li>
+              </ul>
+            </CardContent>
+          </Card>
         </div>
-      </section>
 
-      {/* Additional Features */}
-      <section className="py-24 px-4">
-        <div className="container mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h3 className="text-4xl font-bold mb-8">
-                Powerful Features for{' '}
-                <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Modern Teams
-                </span>
-              </h3>
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-semibold mb-2">Advanced Question Types</h4>
-                    <p className="text-muted-foreground">Rating scales, multiple choice, conditional logic, and custom validations.</p>
-                  </div>
+        {/* Quick Actions */}
+        <div className="grid md:grid-cols-2 gap-8">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardHeader>
+              <Users className="h-10 w-10 text-primary mb-2" />
+              <CardTitle className="text-2xl">For Employees</CardTitle>
+              <CardDescription className="text-base">
+                Share your thoughts and contribute to organizational improvement
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                Participate in surveys to help shape your workplace culture, policies, and overall employee experience.
+              </p>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  <span>Quick & Easy</span>
                 </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-secondary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                    <TrendingUp className="h-5 w-5 text-secondary" />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-semibold mb-2">Real-time Dashboards</h4>
-                    <p className="text-muted-foreground">Monitor response rates and insights as they come in with live analytics.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                    <Zap className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-semibold mb-2">Lightning Fast Setup</h4>
-                    <p className="text-muted-foreground">Deploy surveys in minutes with our intuitive admin interface and templates.</p>
-                  </div>
+                <div className="flex items-center gap-1">
+                  <Shield className="h-4 w-4" />
+                  <span>Confidential</span>
                 </div>
               </div>
-            </div>
-            
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-3xl blur-2xl"></div>
-              <div className="relative bg-background border rounded-3xl p-8 shadow-2xl">
-                <div className="space-y-4">
-                  <div className="h-4 bg-primary/20 rounded w-3/4"></div>
-                  <div className="h-4 bg-secondary/20 rounded w-1/2"></div>
-                  <div className="h-4 bg-primary/20 rounded w-5/6"></div>
-                  <div className="grid grid-cols-3 gap-4 mt-8">
-                    <div className="h-16 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg"></div>
-                    <div className="h-16 bg-gradient-to-br from-secondary/10 to-secondary/5 rounded-lg"></div>
-                    <div className="h-16 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 px-4 bg-gradient-to-r from-primary/10 via-background to-secondary/10">
-        <div className="container mx-auto text-center">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold mb-8">Ready to Transform Your Feedback Process?</h2>
-            <p className="text-xl text-muted-foreground mb-12 leading-relaxed">
-              Join hundreds of organizations using our platform to gather valuable employee insights and drive meaningful change.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Link href="/form">
-                <Button size="lg" className="text-lg px-12 py-7 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-r from-primary to-primary-600">
-                  Begin Your Survey Journey
+              <Link href="/surveys">
+                <Button className="w-full">
+                  Browse Available Surveys
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="text-lg px-12 py-7 rounded-xl hover:bg-primary/5 transition-all duration-300">
-                Schedule Demo
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground mt-8">
-              No credit card required • Free 14-day trial • Setup in under 15 minutes
-            </p>
-          </div>
-        </div>
-      </section>
+            </CardContent>
+          </Card>
 
-      {/* Footer */}
-      <footer className="border-t bg-background/80 py-12 px-4">
-        <div className="container mx-auto text-center">
-          <div className="flex items-center justify-center space-x-3 mb-6">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">i</span>
-            </div>
-            <span className="text-2xl font-bold">
-              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">IXI</span>corp
-            </span>
-          </div>
-          <p className="text-muted-foreground">
-            © 2024 IXIcorp. Professional survey solutions for modern organizations.
-          </p>
+          <Card className="bg-secondary/5 border-secondary/20">
+            <CardHeader>
+              <Settings className="h-10 w-10 text-secondary mb-2" />
+              <CardTitle className="text-2xl">For Administrators</CardTitle>
+              <CardDescription className="text-base">
+                Create surveys, manage responses, and analyze organizational insights
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                Design comprehensive surveys, track responses in real-time, and generate actionable insights for your organization.
+              </p>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Analytics</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <ClipboardList className="h-4 w-4" />
+                  <span>Survey Builder</span>
+                </div>
+              </div>
+              <Link href="/admin">
+                <Button variant="secondary" className="w-full">
+                  Access Admin Panel
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
-      </footer>
+
+      
+      </div>
     </div>
   )
 }

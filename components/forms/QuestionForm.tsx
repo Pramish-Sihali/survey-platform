@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { ArrowLeft, ArrowRight, CheckCircle, Star } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle, Star, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FormStep, Question, FormResponses, FormResponseValue } from '@/lib/utils'
+import { FormStep, FormQuestion, FormResponses, FormResponseValue } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
 interface QuestionFormProps {
@@ -18,6 +18,7 @@ interface QuestionFormProps {
   onSubmit?: () => void
   isLastStep: boolean
   canProceed: boolean
+  isSubmitting?: boolean
 }
 
 const RATING_LABELS = ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
@@ -30,7 +31,8 @@ export function QuestionForm({
   onPrev,
   onSubmit,
   isLastStep,
-  canProceed
+  canProceed,
+  isSubmitting = false
 }: QuestionFormProps) {
   const [otherInputs, setOtherInputs] = useState<Record<string, string>>({})
 
@@ -67,7 +69,7 @@ export function QuestionForm({
     }
   }
 
-  const renderQuestion = (question: Question) => {
+  const renderQuestion = (question: FormQuestion) => {
     const response = responses[question.id]
 
     switch (question.type) {
@@ -345,18 +347,31 @@ export function QuestionForm({
         ))}
 
         <div className="flex justify-between pt-6 border-t">
-          <Button variant="outline" onClick={onPrev}>
+          <Button variant="outline" onClick={onPrev} disabled={isSubmitting}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Previous
           </Button>
           
           {isLastStep ? (
-            <Button onClick={onSubmit} disabled={!canProceed} size="lg">
-              Submit Survey
-              <CheckCircle className="ml-2 h-5 w-5" />
+            <Button 
+              onClick={onSubmit} 
+              disabled={!canProceed || isSubmitting} 
+              size="lg"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  Submit Survey
+                  <CheckCircle className="ml-2 h-5 w-5" />
+                </>
+              )}
             </Button>
           ) : (
-            <Button onClick={onNext} disabled={!canProceed}>
+            <Button onClick={onNext} disabled={!canProceed || isSubmitting}>
               Next Section
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
