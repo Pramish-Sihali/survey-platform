@@ -184,6 +184,54 @@ export interface QuestionAnalytics {
   noCount?: number
 }
 
+export interface AuditQuestion {
+  id: string
+  survey_id: string
+  question_text: string
+  question_type: 'text' | 'yes_no' | 'radio' | 'checkbox' | 'rating' | 'select'
+  is_required: boolean
+  has_other_option: boolean
+  order_index: number
+  category: string
+  description: string | null
+  metadata: any
+  created_by: string | null
+  created_at: string
+  updated_at: string
+  survey_audit_question_options?: AuditQuestionOption[]
+}
+
+export interface AuditQuestionOption {
+  id: string
+  survey_audit_question_id: string
+  option_text: string
+  order_index: number
+  created_at: string
+}
+
+export interface AuditResponse {
+  id: string
+  survey_id: string
+  survey_audit_question_id: string
+  response_type: 'text' | 'number' | 'array' | 'object'
+  text_response: string | null
+  number_response: number | null
+  array_response: string[] | null
+  object_response: any | null
+  responded_by: string | null
+  responded_at: string
+  updated_at: string
+}
+
+
+export interface AuditQuestionsResponse {
+  auditQuestions: AuditQuestion[]
+}
+
+export interface AuditResponsesResponse {
+  auditResponses: AuditResponse[]
+}
+
 // API response types
 export interface ApiResponse<T> {
   data?: T
@@ -368,5 +416,74 @@ export class ApiClient {
 
   static createDepartment(data: Partial<Department>): Promise<{ department: Department }> {
     return this.post('/departments', data)
+  }
+}
+
+export class AuditApiClient {
+  private static baseUrl = '/api/admin'
+
+  static async getAuditQuestions(surveyId: string): Promise<AuditQuestionsResponse> {
+    const response = await fetch(`${this.baseUrl}/surveys/${surveyId}/audit-questions`)
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`)
+    }
+    return response.json()
+  }
+
+  static async createAuditQuestion(surveyId: string, data: Partial<AuditQuestion> & { options?: string[] }): Promise<{ auditQuestion: AuditQuestion }> {
+    const response = await fetch(`${this.baseUrl}/surveys/${surveyId}/audit-questions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`)
+    }
+    return response.json()
+  }
+
+  static async updateAuditQuestion(questionId: string, data: Partial<AuditQuestion> & { options?: string[] }): Promise<{ auditQuestion: AuditQuestion }> {
+    const response = await fetch(`${this.baseUrl}/audit-questions/${questionId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`)
+    }
+    return response.json()
+  }
+
+  static async deleteAuditQuestion(questionId: string): Promise<{ message: string }> {
+    const response = await fetch(`${this.baseUrl}/audit-questions/${questionId}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`)
+    }
+    return response.json()
+  }
+
+  static async getAuditResponses(surveyId: string): Promise<AuditResponsesResponse> {
+    const response = await fetch(`${this.baseUrl}/surveys/${surveyId}/audit-responses`)
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`)
+    }
+    return response.json()
+  }
+
+  static async saveAuditResponses(surveyId: string, responses: Record<string, any>, respondedBy?: string): Promise<{ message: string }> {
+    const response = await fetch(`${this.baseUrl}/surveys/${surveyId}/audit-responses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        responses,
+        responded_by: respondedBy
+      })
+    })
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`)
+    }
+    return response.json()
   }
 }
