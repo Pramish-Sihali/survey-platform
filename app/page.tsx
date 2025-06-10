@@ -38,7 +38,7 @@ export default function HomePage() {
             <span className="text-primary">Feedback Platform</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            Streamline your organization's feedback collection with our comprehensive survey platform. 
+            Streamline your organization&lsquo;s feedback collection with our comprehensive survey platform. 
             Gather insights&lsquo; analyze data, and drive meaningful improvements across your teams.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

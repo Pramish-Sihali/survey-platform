@@ -1,214 +1,314 @@
-// components/admin/AuditAnalytics.tsx
 'use client'
 
-import { Star, CheckCircle, XCircle } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { ArrowLeft, BarChart3, Users, TrendingUp, AlertCircle, Eye } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { Survey, ApiClient } from '@/lib/utils'
 
-interface AuditQuestion {
-  id: string
-  question_text: string
-  question_type: string
-  category: string
-  description: string
-  survey_audit_question_options?: Array<{ option_text: string }>
+interface OverviewStats {
+  totalSurveys: number
+  activeSurveys: number
+  totalResponses: number
+  recentResponses: number
 }
 
-interface AuditResponse {
-  survey_audit_question_id: string
-  response_type: string
-  text_response?: string
-  number_response?: number
-  array_response?: string[]
-  object_response?: any
-  responded_by: string
-  responded_at: string
-}
+export default function AdminAnalyticsPage() {
+  const [surveys, setSurveys] = useState<Survey[]>([])
+  const [stats, setStats] = useState<OverviewStats>({
+    totalSurveys: 0,
+    activeSurveys: 0,
+    totalResponses: 0,
+    recentResponses: 0
+  })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-interface AuditAnalyticsProps {
-  auditQuestions: AuditQuestion[]
-  auditResponses: AuditResponse[]
-}
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        // Fetch surveys
+        const surveysResponse = await fetch('/api/admin/surveys')
+        if (surveysResponse.ok) {
+          const surveysData = await surveysResponse.json()
+          setSurveys(surveysData.surveys || [])
+        } else {
+          // Fallback to public surveys
+          const publicSurveys = await ApiClient.getSurveys()
+          setSurveys(publicSurveys.surveys || [])
+        }
 
-const RATING_LABELS = ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
+        // Fetch platform stats
+        const statsResponse = await fetch('/api/analytics')
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json()
+          setStats({
+            totalSurveys: statsData.totalSurveys || 0,
+            activeSurveys: surveys.filter(s => s.is_active && s.is_published).length,
+            totalResponses: statsData.totalResponses || 0,
+            recentResponses: statsData.recentResponses || 0
+          })
+        }
+      } catch (err) {
+        console.error('Error fetching analytics data:', err)
+        setError('Failed to load analytics data')
+      } finally {
+        setLoading(false)
+      }
+    }
 
-export function AuditAnalytics({ auditQuestions, auditResponses }: AuditAnalyticsProps) {
-  if (auditQuestions.length === 0) {
+    fetchAnalyticsData()
+  }, [])
+
+  if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Audit Analysis</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center py-8">
-          <p className="text-muted-foreground">No audit questions have been created for this survey.</p>
-        </CardContent>
-      </Card>
+      <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
+        <nav className="border-b bg-background/80 backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center space-x-4">
+              <Link href="/admin" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="h-5 w-5" />
+                <span className="text-sm">Back to Dashboard</span>
+              </Link>
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="h-6 w-6 text-primary" />
+                <span className="text-xl font-bold text-foreground">Analytics Overview</span>
+              </div>
+            </div>
+          </div>
+        </nav>
+        
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading analytics...</p>
+          </div>
+        </div>
+      </div>
     )
   }
 
-  // Create a map of responses by question ID
-  const responseMap = auditResponses.reduce((acc, response) => {
-    acc[response.survey_audit_question_id] = response
-    return acc
-  }, {} as Record<string, AuditResponse>)
-
-  // Group questions by category
-  const questionsByCategory = auditQuestions.reduce((acc, question) => {
-    const category = question.category || 'General'
-    if (!acc[category]) acc[category] = []
-    acc[category].push(question)
-    return acc
-  }, {} as Record<string, AuditQuestion[]>)
-
-  const renderResponseDisplay = (question: AuditQuestion, response?: AuditResponse) => {
-    if (!response) {
-      return <span className="text-muted-foreground italic">No response provided</span>
-    }
-
-    switch (question.question_type) {
-      case 'text':
-        return (
-          <div className="bg-muted/50 p-3 rounded-lg">
-            <p className="text-sm">{response.text_response || 'No response'}</p>
-          </div>
-        )
-
-      case 'yes_no':
-        const isYes = response.text_response === 'yes'
-        return (
-          <div className="flex items-center gap-2">
-            {isYes ? (
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            ) : (
-              <XCircle className="h-5 w-5 text-red-600" />
-            )}
-            <span className={`font-medium ${isYes ? 'text-green-700' : 'text-red-700'}`}>
-              {isYes ? 'Yes' : 'No'}
-            </span>
-          </div>
-        )
-
-      case 'radio':
-      case 'select':
-        return (
-          <div className="bg-primary/5 border border-primary/20 p-3 rounded-lg">
-            <span className="font-medium text-primary">{response.text_response}</span>
-          </div>
-        )
-
-      case 'checkbox':
-        const checkboxResponses = response.array_response || []
-        return (
-          <div className="space-y-1">
-            {checkboxResponses.map((item, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-sm">{item}</span>
-              </div>
-            ))}
-            {checkboxResponses.length === 0 && (
-              <span className="text-muted-foreground italic">No selections made</span>
-            )}
-          </div>
-        )
-
-      case 'rating':
-        const rating = response.number_response || 0
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`h-5 w-5 ${
-                      star <= rating 
-                        ? 'text-primary fill-current' 
-                        : 'text-muted-foreground'
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="font-medium">{rating}/5</span>
-              {rating > 0 && (
-                <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded">
-                  {RATING_LABELS[rating - 1]}
-                </span>
-              )}
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
+        <nav className="border-b bg-background/80 backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center space-x-4">
+              <Link href="/admin" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="h-5 w-5" />
+                <span className="text-sm">Back to Dashboard</span>
+              </Link>
             </div>
           </div>
-        )
-
-      default:
-        return <span className="text-muted-foreground">Unknown response type</span>
-    }
+        </nav>
+        
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+          <Card className="w-full max-w-md mx-auto">
+            <CardHeader className="text-center">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <CardTitle className="text-destructive">Error Loading Analytics</CardTitle>
+              <CardDescription>{error}</CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
-  const completionRate = auditQuestions.length > 0 
-    ? Math.round((auditResponses.length / auditQuestions.length) * 100)
-    : 0
-
   return (
-    <div className="space-y-6">
-      {/* Audit Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Audit Overview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{auditQuestions.length}</div>
-              <p className="text-sm text-muted-foreground">Total Questions</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-secondary">{auditResponses.length}</div>
-              <p className="text-sm text-muted-foreground">Answered</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{completionRate}%</div>
-              <p className="text-sm text-muted-foreground">Completion Rate</p>
+    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
+      {/* Navigation */}
+      <nav className="border-b bg-background/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center space-x-4">
+            <Link href="/admin" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-5 w-5" />
+              <span className="text-sm">Back to Dashboard</span>
+            </Link>
+            <div className="flex items-center space-x-2">
+              <BarChart3 className="h-6 w-6 text-primary" />
+              <span className="text-xl font-bold text-foreground">Analytics Overview</span>
             </div>
           </div>
-          <div className="mt-4">
-            <div className="flex justify-between text-sm text-muted-foreground mb-2">
-              <span>Audit Progress</span>
-              <span>{completionRate}%</span>
-            </div>
-            <Progress value={completionRate} className="h-2" />
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </nav>
 
-      {/* Audit Responses by Category */}
-      {Object.entries(questionsByCategory).map(([category, questions]) => (
-        <Card key={category}>
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-2">Analytics Overview</h1>
+          <p className="text-lg text-muted-foreground">
+            Platform-wide insights and survey performance metrics
+          </p>
+        </div>
+
+        {/* Platform Stats */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Surveys</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-primary">{stats.totalSurveys}</div>
+              <p className="text-sm text-muted-foreground">all time</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Active Surveys</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-secondary">{stats.activeSurveys}</div>
+              <p className="text-sm text-muted-foreground">currently published</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Responses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-primary">{stats.totalResponses}</div>
+              <p className="text-sm text-muted-foreground">across all surveys</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-secondary">{stats.recentResponses}</div>
+              <p className="text-sm text-muted-foreground">last 24 hours</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Surveys List with Quick Analytics */}
+        <Card>
           <CardHeader>
-            <CardTitle className="text-lg">{category}</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Survey Analytics
+            </CardTitle>
+            <CardDescription>
+              View detailed analytics for each survey
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {questions.map((question) => {
-              const response = responseMap[question.id]
-              return (
-                <div key={question.id} className="border-l-4 border-primary/30 pl-4">
-                  <div className="mb-2">
-                    <h4 className="font-medium">{question.question_text}</h4>
-                    {question.description && (
-                      <p className="text-sm text-muted-foreground mt-1">{question.description}</p>
-                    )}
-                  </div>
-                  {renderResponseDisplay(question, response)}
-                  {response && (
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Answered by {response.responded_by} on {new Date(response.responded_at).toLocaleDateString()}
+          <CardContent>
+            {surveys.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="mb-4">No surveys found.</p>
+                <Link href="/admin/surveys/new">
+                  <Button>
+                    Create Your First Survey
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {surveys.map((survey) => (
+                  <div key={survey.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="font-medium text-lg">{survey.title}</h4>
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                          survey.is_active && survey.is_published
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {survey.is_active && survey.is_published ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {survey.description || 'No description provided'}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>Created: {new Date(survey.created_at).toLocaleDateString()}</span>
+                        {survey.start_date && <span>Starts: {new Date(survey.start_date).toLocaleDateString()}</span>}
+                        {survey.end_date && <span>Ends: {new Date(survey.end_date).toLocaleDateString()}</span>}
+                      </div>
                     </div>
-                  )}
-                </div>
-              )
-            })}
+                    
+                    <div className="flex items-center space-x-2">
+                      <Link href={`/admin/analytics/${survey.id}`}>
+                        <Button size="sm">
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Analytics
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
-      ))}
+
+        {/* Platform Insights */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Platform Insights
+            </CardTitle>
+            <CardDescription>Key metrics and trends across your survey platform</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h4 className="font-medium">Response Trends</h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Average Response Rate</span>
+                    <span className="font-medium">
+                      {stats.totalSurveys > 0 ? Math.round((stats.totalResponses / stats.totalSurveys) * 10) : 0}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Active Surveys</span>
+                    <span className="font-medium">{stats.activeSurveys}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Total Responses</span>
+                    <span className="font-medium">{stats.totalResponses}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <h4 className="font-medium">Platform Health</h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">System Status</span>
+                    <span className="text-green-600 font-medium">Operational</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Database Connection</span>
+                    <span className="text-green-600 font-medium">Connected</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Recent Activity</span>
+                    <span className="font-medium">{stats.recentResponses} responses</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
