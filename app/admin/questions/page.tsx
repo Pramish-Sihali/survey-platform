@@ -1,3 +1,4 @@
+// app/admin/questions/page.tsx - COMPLETE UPDATED FILE
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -8,12 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { 
-  Survey, 
-  Question, 
-  QuestionOption, 
-  ApiClient 
-} from '@/lib/utils'
+import { Survey, Question, QuestionOption, ApiClient } from '@/lib/utils'
 
 const questionTypes = [
   { value: 'text', label: 'Text Input' },
@@ -34,14 +30,6 @@ interface QuestionFormData {
   order_index: number
   options: string[]
 }
-
-// interface SectionFormData {
-//   id?: string
-//   survey_id: string
-//   title: string
-//   description: string
-//   order_index: number
-// }
 
 interface QuestionFormProps {
   question?: Question & { question_options?: QuestionOption[] }
@@ -66,10 +54,30 @@ function QuestionForm({ question, sectionId, orderIndex, onSave, onCancel, isSub
 
   const [optionInput, setOptionInput] = useState('')
 
+  // Debug logging
+  useEffect(() => {
+    console.log('QuestionForm initialized with:', {
+      sectionId,
+      orderIndex,
+      questionId: question?.id,
+      formData
+    })
+  }, [sectionId, orderIndex, question, formData])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.question_text.trim()) return
+    
+    if (!formData.question_text.trim()) {
+      alert('Question text is required')
+      return
+    }
 
+    if (!formData.section_id) {
+      alert('Section ID is missing')
+      return
+    }
+
+    console.log('Submitting question form:', formData)
     await onSave(formData)
   }
 
@@ -145,7 +153,7 @@ function QuestionForm({ question, sectionId, orderIndex, onSave, onCancel, isSub
                     className="rounded border-primary text-primary focus:ring-primary"
                     disabled={isSubmitting}
                   />
-                  <Label htmlFor="hasOther" className="text-sm">Include &ldquo;Other&ldquo; option</Label>
+                  <Label htmlFor="hasOther" className="text-sm">Include "Other" option</Label>
                 </div>
               </div>
             </div>
@@ -246,16 +254,16 @@ export default function AdminQuestionsPage() {
       setLoading(true)
       setError(null)
       
-      // Try to get admin surveys first, fallback to public surveys
-      try {
-        const response = await fetch('/api/admin/surveys')
-        if (response.ok) {
-          const data = await response.json()
-          setSurveys(data.surveys || [])
-        } else {
-          throw new Error('Admin endpoint not available')
-        }
-      } catch {
+      console.log('Fetching surveys...')
+      
+      // Use admin surveys endpoint to get all surveys
+      const response = await fetch('/api/admin/surveys')
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Surveys loaded:', data.surveys?.length || 0)
+        setSurveys(data.surveys || [])
+      } else {
+        console.log('Admin endpoint failed, falling back to public surveys')
         // Fallback to public surveys
         const publicSurveys = await ApiClient.getSurveys()
         setSurveys(publicSurveys.surveys || [])
@@ -270,36 +278,74 @@ export default function AdminQuestionsPage() {
 
   const fetchSurveyDetails = async (surveyId: string) => {
     try {
+      setLoading(true)
+      setError(null)
+      
+      console.log('Fetching survey details for:', surveyId)
+      
       const response = await ApiClient.getSurvey(surveyId)
+      console.log('Survey loaded:', response.survey)
+      console.log('Sections found:', response.survey.survey_sections?.length || 0)
+      
+      // Log section details for debugging
+      response.survey.survey_sections?.forEach((section, index) => {
+        console.log(`Section ${index}:`, {
+          id: section.id,
+          title: section.title,
+          questions: section.questions?.length || 0
+        })
+      })
+      
       setSelectedSurvey(response.survey)
+      
+      // Reset any form states when switching surveys
+      setEditingQuestion(null)
+      setEditingSection(null)
+      setShowAddQuestion(null)
+      setNewSectionTitle('')
+      setAddingSectionToSurvey(null)
+      
     } catch (err) {
       console.error('Error fetching survey details:', err)
       setError('Failed to load survey details')
+      setSelectedSurvey(null)
+    } finally {
+      setLoading(false)
     }
   }
 
   const addSection = async () => {
-    if (!newSectionTitle.trim() || !addingSectionToSurvey) return
+    if (!newSectionTitle.trim() || !selectedSurvey?.id) return
 
     try {
       setSubmitting(true)
-      const maxOrder = selectedSurvey?.survey_sections?.length || 0
+      setError(null)
       
-      await ApiClient.createSection({
-        survey_id: addingSectionToSurvey,
+      console.log('Adding section:', { 
+        survey_id: selectedSurvey.id, 
+        title: newSectionTitle.trim() 
+      })
+      
+      const response = await ApiClient.createSection({
+        survey_id: selectedSurvey.id,
         title: newSectionTitle.trim(),
         description: '',
-        order_index: maxOrder
+        order_index: 0 // Let the API calculate the correct order
       })
 
+      console.log('Section created successfully:', response)
+
+      // Reset form state
       setNewSectionTitle('')
       setAddingSectionToSurvey(null)
       
       // Refresh survey details
-      await fetchSurveyDetails(addingSectionToSurvey)
-    } catch (err) {
+      await fetchSurveyDetails(selectedSurvey.id)
+    } catch (err: any) {
       console.error('Error adding section:', err)
-      alert('Failed to add section')
+      const errorMessage = err.message || 'Failed to add section'
+      setError(`Failed to add section: ${errorMessage}`)
+      alert(`Failed to add section: ${errorMessage}`)
     } finally {
       setSubmitting(false)
     }
@@ -308,10 +354,16 @@ export default function AdminQuestionsPage() {
   const updateSectionTitle = async (sectionId: string, title: string) => {
     try {
       setSubmitting(true)
+      setError(null)
+      
       const section = selectedSurvey?.survey_sections?.find(s => s.id === sectionId)
-      if (!section) return
+      if (!section) {
+        throw new Error('Section not found')
+      }
 
-      await fetch(`/api/sections/${sectionId}`, {
+      console.log('Updating section:', sectionId, 'to:', title)
+
+      const response = await fetch(`/api/sections/${sectionId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -321,15 +373,23 @@ export default function AdminQuestionsPage() {
         })
       })
 
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Section update failed:', errorText)
+        throw new Error(`Failed to update section: ${response.status}`)
+      }
+
       setEditingSection(null)
       
       // Refresh survey details
       if (selectedSurvey) {
         await fetchSurveyDetails(selectedSurvey.id)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating section:', err)
-      alert('Failed to update section')
+      const errorMessage = err.message || 'Failed to update section'
+      setError(errorMessage)
+      alert(errorMessage)
     } finally {
       setSubmitting(false)
     }
@@ -342,17 +402,29 @@ export default function AdminQuestionsPage() {
 
     try {
       setSubmitting(true)
-      await fetch(`/api/sections/${sectionId}`, {
+      setError(null)
+      
+      console.log('Deleting section:', sectionId)
+      
+      const response = await fetch(`/api/sections/${sectionId}`, {
         method: 'DELETE'
       })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Section deletion failed:', errorText)
+        throw new Error(`Failed to delete section: ${response.status}`)
+      }
 
       // Refresh survey details
       if (selectedSurvey) {
         await fetchSurveyDetails(selectedSurvey.id)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting section:', err)
-      alert('Failed to delete section')
+      const errorMessage = err.message || 'Failed to delete section'
+      setError(errorMessage)
+      alert(errorMessage)
     } finally {
       setSubmitting(false)
     }
@@ -361,29 +433,80 @@ export default function AdminQuestionsPage() {
   const saveQuestion = async (questionData: QuestionFormData) => {
     try {
       setSubmitting(true)
+      setError(null)
+      
+      console.log('Attempting to save question:', questionData)
+      
+      // Validate required data
+      if (!questionData.section_id) {
+        throw new Error('Section ID is required but missing')
+      }
+      
+      if (!questionData.question_text?.trim()) {
+        throw new Error('Question text is required')
+      }
+      
+      // Verify the section exists in the current survey
+      const sectionExists = selectedSurvey?.survey_sections?.some(s => s.id === questionData.section_id)
+      if (!sectionExists) {
+        throw new Error(`Section not found: ${questionData.section_id}`)
+      }
       
       if (questionData.id) {
         // Update existing question
-        await fetch(`/api/questions/${questionData.id}`, {
+        console.log('Updating existing question:', questionData.id)
+        
+        const response = await fetch(`/api/questions/${questionData.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(questionData)
         })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Update failed:', errorText)
+          throw new Error(`Failed to update question: ${response.status} ${response.statusText}`)
+        }
+
+        console.log('Question updated successfully')
       } else {
         // Create new question
-        await ApiClient.createQuestion(questionData)
+        console.log('Creating new question for section:', questionData.section_id)
+        
+        // Remove order_index and id from the data - let API handle it
+        const { id, order_index, ...cleanQuestionData } = questionData
+        
+        const response = await fetch('/api/questions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cleanQuestionData)
+        })
+
+        if (!response.ok) {
+          const errorData = await response.text()
+          console.error('Creation failed:', errorData)
+          throw new Error(`Failed to create question: ${response.status} ${response.statusText}`)
+        }
+
+        const result = await response.json()
+        console.log('Question created successfully:', result)
       }
 
+      // Reset form state
       setEditingQuestion(null)
       setShowAddQuestion(null)
       
-      // Refresh survey details
+      // Reload the survey to see updated questions
       if (selectedSurvey) {
+        console.log('Reloading survey data...')
         await fetchSurveyDetails(selectedSurvey.id)
       }
-    } catch (err) {
+      
+    } catch (err: any) {
       console.error('Error saving question:', err)
-      alert('Failed to save question')
+      const errorMessage = err.message || 'Unknown error occurred'
+      setError(`Failed to save question: ${errorMessage}`)
+      alert(`Failed to save question: ${errorMessage}`)
     } finally {
       setSubmitting(false)
     }
@@ -396,17 +519,29 @@ export default function AdminQuestionsPage() {
 
     try {
       setSubmitting(true)
-      await fetch(`/api/questions/${questionId}`, {
+      setError(null)
+      
+      console.log('Deleting question:', questionId)
+      
+      const response = await fetch(`/api/questions/${questionId}`, {
         method: 'DELETE'
       })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Question deletion failed:', errorText)
+        throw new Error(`Failed to delete question: ${response.status}`)
+      }
 
       // Refresh survey details
       if (selectedSurvey) {
         await fetchSurveyDetails(selectedSurvey.id)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting question:', err)
-      alert('Failed to delete question')
+      const errorMessage = err.message || 'Failed to delete question'
+      setError(errorMessage)
+      alert(errorMessage)
     } finally {
       setSubmitting(false)
     }
@@ -440,7 +575,7 @@ export default function AdminQuestionsPage() {
     )
   }
 
-  if (error) {
+  if (error && !selectedSurvey) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
         <nav className="border-b bg-background/80 backdrop-blur-sm">
@@ -491,7 +626,21 @@ export default function AdminQuestionsPage() {
             <div className="flex items-center space-x-2">
               <Select 
                 value={selectedSurvey?.id || ''} 
-                onValueChange={(surveyId) => surveyId && fetchSurveyDetails(surveyId)}
+                onValueChange={async (surveyId) => {
+                  if (surveyId) {
+                    console.log('Survey selected from dropdown:', surveyId)
+                    
+                    // Clear any existing state first
+                    setSelectedSurvey(null)
+                    setEditingQuestion(null)
+                    setEditingSection(null)
+                    setShowAddQuestion(null)
+                    setError(null)
+                    
+                    // Fetch the survey details
+                    await fetchSurveyDetails(surveyId)
+                  }
+                }}
               >
                 <SelectTrigger className="w-64">
                   <SelectValue placeholder="Select a survey to edit..." />
@@ -504,10 +653,6 @@ export default function AdminQuestionsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button disabled={submitting}>
-                <Save className="h-4 w-4 mr-2" />
-                {submitting ? 'Saving...' : 'Save Changes'}
-              </Button>
             </div>
           </div>
         </div>
@@ -527,9 +672,10 @@ export default function AdminQuestionsPage() {
               {surveys.length === 0 && (
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">No surveys found.</p>
-                  <Link href="/admin">
-                    <Button variant="outline">
-                      Go to Admin Dashboard
+                  <Link href="/admin/surveys/new">
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create New Survey
                     </Button>
                   </Link>
                 </div>
@@ -545,6 +691,25 @@ export default function AdminQuestionsPage() {
                 <p className="text-lg text-muted-foreground">{selectedSurvey.description}</p>
               )}
             </div>
+
+            {/* Error Display */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                  <p className="text-red-800 font-medium">Error</p>
+                </div>
+                <p className="text-red-700 text-sm mt-1">{error}</p>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => setError(null)}
+                  className="mt-2"
+                >
+                  Dismiss
+                </Button>
+              </div>
+            )}
 
             {/* Add Question Form */}
             {(showAddQuestion || editingQuestion) && (
@@ -606,8 +771,23 @@ export default function AdminQuestionsPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => setShowAddQuestion(section.id)}
-                          disabled={submitting}
+                          onClick={() => {
+                            console.log('Add question clicked for section:', section.id)
+                            
+                            if (!section.id) {
+                              setError('Section ID is missing. Please refresh and try again.')
+                              return
+                            }
+                            
+                            if (!selectedSurvey?.id) {
+                              setError('No survey selected. Please select a survey first.')
+                              return
+                            }
+                            
+                            setError(null)
+                            setShowAddQuestion(section.id)
+                          }}
+                          disabled={submitting || !section.id}
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Add Question
@@ -629,9 +809,15 @@ export default function AdminQuestionsPage() {
                         <p>No questions in this section yet.</p>
                         <Button
                           variant="ghost"
-                          onClick={() => setShowAddQuestion(section.id)}
+                          onClick={() => {
+                            if (section.id) {
+                              setShowAddQuestion(section.id)
+                            } else {
+                              setError('Section ID is missing')
+                            }
+                          }}
                           className="mt-2"
-                          disabled={submitting}
+                          disabled={submitting || !section.id}
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Add your first question
@@ -719,9 +905,13 @@ export default function AdminQuestionsPage() {
                         setAddingSectionToSurvey(selectedSurvey.id)
                         addSection()
                       }}
-                      disabled={submitting}
+                      disabled={submitting || !newSectionTitle.trim()}
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      {submitting ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Plus className="h-4 w-4 mr-2" />
+                      )}
                       Add Section
                     </Button>
                   </div>

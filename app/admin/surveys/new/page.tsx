@@ -1,21 +1,21 @@
+// app/admin/surveys/new/page.tsx - SIMPLIFIED WITHOUT PUBLISH TOGGLE
 'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Save, Calendar,  AlertCircle, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Calendar, AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { ApiClient,  } from '@/lib/utils'
+import { ApiClient } from '@/lib/utils'
 
 interface SurveyFormData {
   title: string
   description: string
   is_active: boolean
-  is_published: boolean
   start_date: string
   end_date: string
 }
@@ -28,21 +28,21 @@ export default function NewSurveyPage() {
   const [formData, setFormData] = useState<SurveyFormData>({
     title: '',
     description: '',
-    is_active: true,
-    is_published: false,
+    is_active: true, // Default to active
     start_date: '',
     end_date: ''
   })
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
-
+  
     if (!formData.title.trim()) {
       newErrors.title = 'Survey title is required'
     } else if (formData.title.trim().length < 3) {
       newErrors.title = 'Survey title must be at least 3 characters'
     }
-
+  
+    // Only validate that end date is after start date (if both are provided)
     if (formData.start_date && formData.end_date) {
       const startDate = new Date(formData.start_date)
       const endDate = new Date(formData.end_date)
@@ -51,11 +51,7 @@ export default function NewSurveyPage() {
         newErrors.end_date = 'End date must be after start date'
       }
     }
-
-    if (formData.start_date && new Date(formData.start_date) < new Date()) {
-      newErrors.start_date = 'Start date cannot be in the past'
-    }
-
+  
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -108,7 +104,6 @@ export default function NewSurveyPage() {
 
   // Set default dates
   const today = formatDateForInput(new Date())
-  // const nextMonth = formatDateForInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
@@ -137,7 +132,7 @@ export default function NewSurveyPage() {
           <CardHeader>
             <CardTitle className="text-2xl">Survey Details</CardTitle>
             <CardDescription>
-              Create a new survey to collect employee feedback. You&ldquo;ll be able to add sections and questions after creating the survey.
+              Create a new survey to collect employee feedback. You'll be able to add sections and questions after creating the survey.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -193,7 +188,7 @@ export default function NewSurveyPage() {
                       onChange={(e) => updateField('start_date', e.target.value)}
                       className={errors.start_date ? 'border-destructive' : ''}
                       disabled={submitting}
-                      min={today}
+                    
                     />
                     {errors.start_date && (
                       <p className="text-sm text-destructive">{errors.start_date}</p>
@@ -212,7 +207,7 @@ export default function NewSurveyPage() {
                       onChange={(e) => updateField('end_date', e.target.value)}
                       className={errors.end_date ? 'border-destructive' : ''}
                       disabled={submitting}
-                      min={formData.start_date || today}
+                   
                     />
                     {errors.end_date && (
                       <p className="text-sm text-destructive">{errors.end_date}</p>
@@ -224,44 +219,25 @@ export default function NewSurveyPage() {
                 </div>
               </div>
 
-              {/* Survey Status */}
+              {/* Survey Status - SIMPLIFIED */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Survey Status</h3>
                 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="space-y-1">
-                      <Label htmlFor="is_active" className="text-base font-medium">
-                        Active Survey
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Inactive surveys cannot be accessed by employees
-                      </p>
-                    </div>
-                    <Switch
-                      id="is_active"
-                      checked={formData.is_active}
-                      onCheckedChange={(checked) => updateField('is_active', checked)}
-                      disabled={submitting}
-                    />
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <Label htmlFor="is_active" className="text-base font-medium">
+                      Active Survey
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Active surveys are visible to employees. You can change this later.
+                    </p>
                   </div>
-
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="space-y-1">
-                      <Label htmlFor="is_published" className="text-base font-medium">
-                        Published
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Published surveys are visible to employees. You can publish later after adding questions.
-                      </p>
-                    </div>
-                    <Switch
-                      id="is_published"
-                      checked={formData.is_published}
-                      onCheckedChange={(checked) => updateField('is_published', checked)}
-                      disabled={submitting}
-                    />
-                  </div>
+                  <Switch
+                    id="is_active"
+                    checked={formData.is_active}
+                    onCheckedChange={(checked) => updateField('is_active', checked)}
+                    disabled={submitting}
+                  />
                 </div>
               </div>
 
@@ -272,8 +248,8 @@ export default function NewSurveyPage() {
                   <div>
                     <h4 className="font-medium text-blue-900">Next Steps</h4>
                     <p className="text-sm text-blue-700 mt-1">
-                      After creating this survey, you&ldquo;ll be able to add sections and questions. 
-                      Remember to publish the survey when you&ldquo;re ready for employees to participate.
+                      After creating this survey, you'll be able to add sections and questions. 
+                      Remember to make the survey active when you're ready for employees to participate.
                     </p>
                   </div>
                 </div>

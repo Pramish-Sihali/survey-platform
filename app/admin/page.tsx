@@ -1,11 +1,13 @@
+// app/admin/page.tsx - FIXED WITH SIMPLIFIED ACTIVE TOGGLE
 'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Settings, BarChart3, ClipboardList,  ArrowLeft, ToggleLeft, ToggleRight, Plus, AlertCircle } from 'lucide-react'
+import { Settings, BarChart3, ClipboardList, ArrowLeft, Plus, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ApiClient, Survey, formatDate, } from '@/lib/utils'
+import { Switch } from '@/components/ui/switch'
+import { ApiClient, Survey, formatDate } from '@/lib/utils'
 
 interface AdminStats {
   totalSurveys: number
@@ -24,13 +26,14 @@ export default function AdminPage() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [updating, setUpdating] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchAdminData = async () => {
       try {
         setLoading(true)
         
-        // Fetch all surveys (would need admin endpoint)
+        // Fetch all surveys (admin endpoint)
         const surveysResponse = await fetch('/api/admin/surveys')
         if (surveysResponse.ok) {
           const surveysData = await surveysResponse.json()
@@ -38,7 +41,7 @@ export default function AdminPage() {
           
           // Calculate stats
           const totalSurveys = surveysData.surveys?.length || 0
-          const activeSurveys = surveysData.surveys?.filter((s: Survey) => s.is_active && s.is_published).length || 0
+          const activeSurveys = surveysData.surveys?.filter((s: Survey) => s.is_active).length || 0
           
           setStats({
             totalSurveys,
@@ -68,22 +71,40 @@ export default function AdminPage() {
     fetchAdminData()
   }, [])
 
-  const toggleSurveyStatus = async (surveyId: string, newStatus: boolean) => {
+  const toggleSurveyStatus = async (surveyId: string, currentStatus: boolean) => {
     try {
+      setUpdating(surveyId)
+      
       const survey = surveys.find(s => s.id === surveyId)
       if (!survey) return
 
-      await ApiClient.updateSurvey(surveyId, { ...survey, is_published: newStatus })
+      // Only toggle is_active (simplified)
+      const updatedSurvey = {
+        ...survey,
+        is_active: !currentStatus,
+        is_published: true // Keep published as true always
+      }
+
+      await ApiClient.updateSurvey(surveyId, updatedSurvey)
       
       // Update local state
       setSurveys(prevSurveys => 
         prevSurveys.map(s => 
-          s.id === surveyId ? { ...s, is_published: newStatus } : s
+          s.id === surveyId ? { ...s, is_active: !currentStatus } : s
         )
       )
+
+      // Update stats
+      setStats(prev => ({
+        ...prev,
+        activeSurveys: !currentStatus ? prev.activeSurveys + 1 : prev.activeSurveys - 1
+      }))
+
     } catch (err) {
       console.error('Error updating survey status:', err)
       alert('Failed to update survey status')
+    } finally {
+      setUpdating(null)
     }
   }
 
@@ -210,7 +231,7 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-secondary">{stats.activeSurveys}</div>
-              <p className="text-sm text-muted-foreground">currently published</p>
+              <p className="text-sm text-muted-foreground">visible to users</p>
             </CardContent>
           </Card>
 
@@ -325,7 +346,16 @@ export default function AdminPage() {
                 {surveys.map((survey) => (
                   <div key={survey.id} className="flex items-center justify-between py-4 border-b last:border-b-0">
                     <div className="flex-1">
-                      <h4 className="font-medium text-lg">{survey.title}</h4>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="font-medium text-lg">{survey.title}</h4>
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                          survey.is_active
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {survey.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
                       <p className="text-sm text-muted-foreground mt-1">
                         {survey.description || 'No description provided'}
                       </p>
@@ -337,23 +367,12 @@ export default function AdminPage() {
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm text-muted-foreground">Published:</span>
-                        <button
-                          onClick={() => toggleSurveyStatus(survey.id, !survey.is_published)}
-                          className="flex items-center space-x-1"
-                        >
-                          {survey.is_published ? (
-                            <>
-                              <ToggleRight className="h-5 w-5 text-green-600" />
-                              <span className="text-sm font-medium text-green-600">Active</span>
-                            </>
-                          ) : (
-                            <>
-                              <ToggleLeft className="h-5 w-5 text-red-600" />
-                              <span className="text-sm font-medium text-red-600">Inactive</span>
-                            </>
-                          )}
-                        </button>
+                        <span className="text-sm text-muted-foreground">Active:</span>
+                        <Switch
+                          checked={survey.is_active}
+                          onCheckedChange={() => toggleSurveyStatus(survey.id, survey.is_active)}
+                          disabled={updating === survey.id}
+                        />
                       </div>
                       <div className="flex items-center space-x-2">
                         <Link href={`/admin/analytics/${survey.id}`}>
@@ -363,9 +382,9 @@ export default function AdminPage() {
                           </Button>
                         </Link>
                         <Link href={`/admin/surveys/${survey.id}/edit`}>
-                          {/* <Button size="sm" variant="ghost">
+                          <Button size="sm" variant="ghost">
                             Edit
-                          </Button> */}
+                          </Button>
                         </Link>
                       </div>
                     </div>

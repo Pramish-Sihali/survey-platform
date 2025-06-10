@@ -1,14 +1,15 @@
+// app/admin/settings/page.tsx - UPDATED WITH CONSOLIDATED API
 'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Edit, Trash2, Save,  Settings, Building, AlertCircle, Loader2 } from 'lucide-react'
+import { ArrowLeft, Plus, Edit, Trash2, Save, Settings, Building, AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Department, ApiClient } from '@/lib/utils'
+import { Department } from '@/lib/utils'
 
 interface DepartmentFormData {
   id?: string
@@ -69,7 +70,7 @@ function DepartmentForm({ department, onSave, onCancel, isSubmitting }: Departme
                 />
               </Label>
               <p className="text-xs text-muted-foreground">
-                Inactive departments won&ldquo;t appear in employee forms
+                Inactive departments won't appear in employee forms
               </p>
             </div>
           </div>
@@ -127,8 +128,15 @@ export default function AdminSettingsPage() {
     try {
       setLoading(true)
       setError(null)
-      const response = await ApiClient.getDepartments()
-      setDepartments(response.departments || [])
+      
+      // Use consolidated departments API with admin flag
+      const response = await fetch('/api/departments?admin=true')
+      if (response.ok) {
+        const data = await response.json()
+        setDepartments(data.departments || [])
+      } else {
+        throw new Error('Failed to fetch departments')
+      }
     } catch (err) {
       console.error('Error fetching departments:', err)
       setError('Failed to load departments')
@@ -143,14 +151,26 @@ export default function AdminSettingsPage() {
       
       if (departmentData.id) {
         // Update existing department
-        await fetch(`/api/departments/${departmentData.id}`, {
+        const response = await fetch(`/api/departments/${departmentData.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(departmentData)
         })
+
+        if (!response.ok) {
+          throw new Error('Failed to update department')
+        }
       } else {
         // Create new department
-        await ApiClient.createDepartment(departmentData)
+        const response = await fetch('/api/departments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(departmentData)
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to create department')
+        }
       }
 
       setEditingDepartment(null)
@@ -173,9 +193,13 @@ export default function AdminSettingsPage() {
 
     try {
       setSubmitting(true)
-      await fetch(`/api/departments/${departmentId}`, {
+      const response = await fetch(`/api/departments/${departmentId}`, {
         method: 'DELETE'
       })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete department')
+      }
 
       // Refresh departments list
       await fetchDepartments()
@@ -190,7 +214,7 @@ export default function AdminSettingsPage() {
   const toggleDepartmentStatus = async (department: Department) => {
     try {
       setSubmitting(true)
-      await fetch(`/api/departments/${department.id}`, {
+      const response = await fetch(`/api/departments/${department.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -198,6 +222,10 @@ export default function AdminSettingsPage() {
           is_active: !department.is_active
         })
       })
+
+      if (!response.ok) {
+        throw new Error('Failed to update department status')
+      }
 
       // Refresh departments list
       await fetchDepartments()
@@ -451,7 +479,7 @@ export default function AdminSettingsPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Environment:</span>
-                    <span className="font-medium">Development</span>
+                    <span className="font-medium">Production</span>
                   </div>
                 </div>
               </div>

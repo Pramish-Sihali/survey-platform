@@ -1,56 +1,4 @@
-// import { clsx, type ClassValue } from "clsx"
-// import { twMerge } from "tailwind-merge"
-
-// export function cn(...inputs: ClassValue[]) {
-//   return twMerge(clsx(inputs))
-// }
-
-// // Form step types
-// export interface FormStep {
-//   id: string
-//   title: string
-//   questions: Question[]
-// }
-
-// export interface Question {
-//   id: string
-//   type: 'text' | 'select' | 'radio' | 'checkbox' | 'rating' | 'yes_no'
-//   question: string
-//   required: boolean
-//   options?: string[]
-//   hasOther?: boolean
-//   section?: string
-// }
-
-// export interface EmployeeInfo {
-//   name: string
-//   designation: string
-//   department: string
-//   supervisor: string
-//   reportsTo: string
-// }
-
-// // Form response types
-// export type FormResponseValue = 
-//   | string 
-//   | number 
-//   | string[] 
-//   | { main: string | number; other?: string }
-
-// export type FormResponses = Record<string, FormResponseValue>
-// // Analytics types
-// export interface QuestionAnalytics {
-//   id: string
-//   question: string
-//   type: string
-//   responses: number
-//   avgRating?: number
-//   distribution?: number[]
-//   yesCount?: number
-//   noCount?: number
-// }
-
-// lib/utils.ts - Updated with database types
+// lib/utils.ts - COMPLETE UPDATED FILE
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -223,7 +171,6 @@ export interface AuditResponse {
   updated_at: string
 }
 
-
 export interface AuditQuestionsResponse {
   auditQuestions: AuditQuestion[]
 }
@@ -373,25 +320,13 @@ export class ApiClient {
     return response.json()
   }
 
-  // Specific API methods
+  // Survey methods
   static getSurveys(): Promise<SurveyListResponse> {
     return this.get('/surveys')
   }
 
   static getSurvey(id: string): Promise<SurveyDetailResponse> {
     return this.get(`/surveys/${id}`)
-  }
-
-  static getDepartments(): Promise<DepartmentsResponse> {
-    return this.get('/departments')
-  }
-
-  static submitResponse(data: any): Promise<ApiResponse<any>> {
-    return this.post('/responses', data)
-  }
-
-  static getAnalytics(surveyId: string): Promise<AnalyticsResponse> {
-    return this.get(`/analytics/${surveyId}`)
   }
 
   static createSurvey(data: Partial<Survey>): Promise<{ survey: Survey }> {
@@ -406,19 +341,62 @@ export class ApiClient {
     return this.delete(`/surveys/${id}`)
   }
 
-  static createSection(data: Partial<SurveySection>): Promise<{ section: SurveySection }> {
-    return this.post('/sections', data)
-  }
-
-  static createQuestion(data: Partial<Question> & { options?: string[] }): Promise<{ question: Question }> {
-    return this.post('/questions', data)
+  // Department methods - UPDATED TO USE CONSOLIDATED API
+  static getDepartments(adminView = false): Promise<DepartmentsResponse> {
+    const endpoint = adminView ? '/departments?admin=true' : '/departments'
+    return this.get(endpoint)
   }
 
   static createDepartment(data: Partial<Department>): Promise<{ department: Department }> {
     return this.post('/departments', data)
   }
+
+  static updateDepartment(id: string, data: Partial<Department>): Promise<{ department: Department }> {
+    return this.put(`/departments/${id}`, data)
+  }
+
+  static deleteDepartment(id: string): Promise<ApiResponse<any>> {
+    return this.delete(`/departments/${id}`)
+  }
+
+  // Section methods
+  static createSection(data: Partial<SurveySection>): Promise<{ section: SurveySection }> {
+    return this.post('/sections', data)
+  }
+
+  static updateSection(id: string, data: Partial<SurveySection>): Promise<{ section: SurveySection }> {
+    return this.put(`/sections/${id}`, data)
+  }
+
+  static deleteSection(id: string): Promise<ApiResponse<any>> {
+    return this.delete(`/sections/${id}`)
+  }
+
+  // Question methods
+  static createQuestion(data: Partial<Question> & { options?: string[] }): Promise<{ question: Question }> {
+    return this.post('/questions', data)
+  }
+
+  static updateQuestion(id: string, data: Partial<Question> & { options?: string[] }): Promise<{ question: Question }> {
+    return this.put(`/questions/${id}`, data)
+  }
+
+  static deleteQuestion(id: string): Promise<ApiResponse<any>> {
+    return this.delete(`/questions/${id}`)
+  }
+
+  // Response methods
+  static submitResponse(data: any): Promise<ApiResponse<any>> {
+    return this.post('/responses', data)
+  }
+
+  // Analytics methods
+  static getAnalytics(surveyId: string): Promise<AnalyticsResponse> {
+    return this.get(`/analytics/${surveyId}`)
+  }
 }
 
+// Audit API client
 export class AuditApiClient {
   private static baseUrl = '/api/admin'
 
