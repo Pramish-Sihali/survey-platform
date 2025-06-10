@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   Survey, 
-  SurveySection, 
   Question, 
   QuestionOption, 
   ApiClient 
@@ -36,13 +35,13 @@ interface QuestionFormData {
   options: string[]
 }
 
-interface SectionFormData {
-  id?: string
-  survey_id: string
-  title: string
-  description: string
-  order_index: number
-}
+// interface SectionFormData {
+//   id?: string
+//   survey_id: string
+//   title: string
+//   description: string
+//   order_index: number
+// }
 
 interface QuestionFormProps {
   question?: Question & { question_options?: QuestionOption[] }
@@ -146,7 +145,7 @@ function QuestionForm({ question, sectionId, orderIndex, onSave, onCancel, isSub
                     className="rounded border-primary text-primary focus:ring-primary"
                     disabled={isSubmitting}
                   />
-                  <Label htmlFor="hasOther" className="text-sm">Include "Other" option</Label>
+                  <Label htmlFor="hasOther" className="text-sm">Include &ldquo;Other&ldquo; option</Label>
                 </div>
               </div>
             </div>

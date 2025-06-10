@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Settings, BarChart3, ClipboardList, Users, ArrowLeft, ToggleLeft, ToggleRight, Plus, AlertCircle } from 'lucide-react'
+import { Settings, BarChart3, ClipboardList,  ArrowLeft, ToggleLeft, ToggleRight, Plus, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ApiClient, Survey, formatDate, formatDateTime } from '@/lib/utils'
+import { ApiClient, Survey, formatDate, } from '@/lib/utils'
 
 interface AdminStats {
   totalSurveys: number

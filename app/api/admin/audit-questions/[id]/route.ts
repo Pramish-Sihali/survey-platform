@@ -66,6 +66,7 @@ export async function PUT(
 
     return NextResponse.json({ auditQuestion })
   } catch (error) {
+    console.log(error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -88,6 +89,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Audit question deleted successfully' })
   } catch (error) {
+    console.log(error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

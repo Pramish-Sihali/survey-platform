@@ -30,6 +30,7 @@ export async function PUT(
   
       return NextResponse.json({ department: data })
     } catch (error) {
+      console.log(error)
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
   }
@@ -52,6 +53,7 @@ export async function PUT(
   
       return NextResponse.json({ message: 'Department deleted successfully' })
     } catch (error) {
+      console.log(error)
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
   }

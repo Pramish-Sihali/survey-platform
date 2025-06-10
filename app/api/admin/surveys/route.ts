@@ -1,5 +1,5 @@
 // app/api/admin/surveys/route.ts
-import { NextRequest, NextResponse } from 'next/server'
+import {  NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
 export async function GET() {
@@ -16,6 +16,7 @@ export async function GET() {
 
     return NextResponse.json({ surveys })
   } catch (error) {
+    console.log(error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

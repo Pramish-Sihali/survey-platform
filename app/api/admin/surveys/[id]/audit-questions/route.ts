@@ -32,6 +32,7 @@ export async function GET(
 
     return NextResponse.json({ auditQuestions: questionsWithSortedOptions })
   } catch (error) {
+    console.log(error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -106,6 +107,7 @@ export async function POST(
 
     return NextResponse.json({ auditQuestion }, { status: 201 })
   } catch (error) {
+    console.log(error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

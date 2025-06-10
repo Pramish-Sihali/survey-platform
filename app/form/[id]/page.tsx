@@ -24,7 +24,7 @@ import {
 
 export default function DynamicFormPage() {
   const params = useParams()
-  const router = useRouter()
+  // const router = useRouter()
   const surveyId = params.id as string
 
   const [currentStep, setCurrentStep] = useState(0)

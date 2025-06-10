@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, Calendar, Clock, Users, ChevronRight, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ApiClient, Survey, formatDate, isDateInRange } from '@/lib/utils'
+import { ApiClient, Survey, formatDate,  } from '@/lib/utils'
 
 export default function SurveySelectionPage() {
   const [surveys, setSurveys] = useState<Survey[]>([])

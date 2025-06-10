@@ -59,6 +59,7 @@ export async function PUT(
   
       return NextResponse.json({ question })
     } catch (error) {
+      console.log(error)
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
   }
@@ -81,6 +82,7 @@ export async function PUT(
   
       return NextResponse.json({ message: 'Question deleted successfully' })
     } catch (error) {
+      console.log(error)
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
   }

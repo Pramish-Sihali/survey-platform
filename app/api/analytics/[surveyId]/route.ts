@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
 
-
 // app/api/analytics/[surveyId]/route.ts - FIXED
 export async function GET(
   request: NextRequest,
@@ -123,6 +122,7 @@ export async function GET(
       questionAnalytics
     })
   } catch (error) {
+    console.log(error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

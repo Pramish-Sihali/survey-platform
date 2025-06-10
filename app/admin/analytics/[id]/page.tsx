@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
-import { ApiClient, QuestionAnalytics, AnalyticsResponse, Survey } from '@/lib/utils'
+import { ApiClient, AnalyticsResponse, Survey } from '@/lib/utils'
 
 import { AuditQuestionForm } from '@/components/admin/AuditQuestionForm'
 import { AuditResponseForm } from '@/components/admin/AuditResponseForm'
@@ -577,7 +577,7 @@ export default function IndividualSurveyAnalyticsPage() {
                   <div>
                     <CardTitle>Audit Questions</CardTitle>
                     <CardDescription>
-                      Create questions to evaluate and analyze this survey's data quality and insights.
+                      Create questions to evaluate and analyze this survey&apos;s data quality and insights.
                     </CardDescription>
                   </div>
                   <Button onClick={() => setShowAddQuestion(true)} disabled={showAddQuestion || editingQuestion}>
@@ -601,7 +601,7 @@ export default function IndividualSurveyAnalyticsPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {auditQuestions.map((question, index) => (
+                    {auditQuestions.map((question) => (
                       <div key={question.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -660,7 +660,7 @@ export default function IndividualSurveyAnalyticsPage() {
               <CardHeader>
                 <CardTitle>Audit Responses</CardTitle>
                 <CardDescription>
-                  Answer the audit questions to evaluate this survey's data and insights.
+                  Answer the audit questions to evaluate this survey&lsquo;s data and insights.
                 </CardDescription>
               </CardHeader>
               <CardContent>

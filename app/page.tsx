@@ -39,7 +39,7 @@ export default function HomePage() {
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Streamline your organization's feedback collection with our comprehensive survey platform. 
-            Gather insights, analyze data, and drive meaningful improvements across your teams.
+            Gather insights&lsquo; analyze data, and drive meaningful improvements across your teams.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/surveys">

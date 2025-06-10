@@ -3,13 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Save, Calendar, Clock, AlertCircle, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Calendar,  AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { ApiClient, Survey } from '@/lib/utils'
+import { ApiClient,  } from '@/lib/utils'
 
 interface SurveyFormData {
   title: string
@@ -108,7 +108,7 @@ export default function NewSurveyPage() {
 
   // Set default dates
   const today = formatDateForInput(new Date())
-  const nextMonth = formatDateForInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
+  // const nextMonth = formatDateForInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
@@ -137,7 +137,7 @@ export default function NewSurveyPage() {
           <CardHeader>
             <CardTitle className="text-2xl">Survey Details</CardTitle>
             <CardDescription>
-              Create a new survey to collect employee feedback. You'll be able to add sections and questions after creating the survey.
+              Create a new survey to collect employee feedback. You&ldquo;ll be able to add sections and questions after creating the survey.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -272,8 +272,8 @@ export default function NewSurveyPage() {
                   <div>
                     <h4 className="font-medium text-blue-900">Next Steps</h4>
                     <p className="text-sm text-blue-700 mt-1">
-                      After creating this survey, you'll be able to add sections and questions. 
-                      Remember to publish the survey when you're ready for employees to participate.
+                      After creating this survey, you&ldquo;ll be able to add sections and questions. 
+                      Remember to publish the survey when you&ldquo;re ready for employees to participate.
                     </p>
                   </div>
                 </div>

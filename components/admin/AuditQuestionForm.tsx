@@ -214,7 +214,7 @@ export function AuditQuestionForm({ surveyId, question, onSave, onCancel }: Audi
                   onChange={(e) => setFormData(prev => ({ ...prev, has_other_option: e.target.checked }))}
                   disabled={submitting}
                 />
-                <Label htmlFor="hasOther" className="text-sm">Include "Other" option</Label>
+                <Label htmlFor="hasOther" className="text-sm">Include &quot;Other&quot; option</Label>
               </div>
             </div>
           </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Edit, Trash2, Save, X, Settings, Building, AlertCircle, Loader2 } from 'lucide-react'
+import { ArrowLeft, Plus, Edit, Trash2, Save,  Settings, Building, AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -69,7 +69,7 @@ function DepartmentForm({ department, onSave, onCancel, isSubmitting }: Departme
                 />
               </Label>
               <p className="text-xs text-muted-foreground">
-                Inactive departments won't appear in employee forms
+                Inactive departments won&ldquo;t appear in employee forms
               </p>
             </div>
           </div>
