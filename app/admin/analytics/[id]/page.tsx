@@ -1,20 +1,17 @@
-
 // Updated app/admin/analytics/[id]/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Download, Users, BarChart3, TrendingUp, Star, AlertCircle, Plus, Settings, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Download, Users, BarChart3, TrendingUp, Star, AlertCircle, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
 import { ApiClient, AnalyticsResponse, Survey } from '@/lib/utils'
-
-import { AuditQuestionForm } from '@/components/admin/AuditQuestionForm'
-import { AuditResponseForm } from '@/components/admin/AuditResponseForm'
-import { AuditAnalytics } from '@/components/admin/AuditAnalytics'
+import { CombinedAuditInterface } from '@/components/admin/CombinedAuditInterface'
+import { AuditAnalyticsComparison } from '@/components/admin/AuditAnalyticsComparison'
 
 const RATING_LABELS = ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
 
@@ -27,13 +24,7 @@ export default function IndividualSurveyAnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [departmentFilter, setDepartmentFilter] = useState('all')
-  
-  // Audit questions state
-  const [auditQuestions, setAuditQuestions] = useState<any[]>([])
-  const [auditResponses, setAuditResponses] = useState<any[]>([])
-  const [showAddQuestion, setShowAddQuestion] = useState(false)
-  const [editingQuestion, setEditingQuestion] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState<'analytics' | 'audit-questions' | 'audit-responses' | 'audit-analytics'>('analytics')
+  const [activeTab, setActiveTab] = useState<'analytics' | 'audit' | 'audit-analytics'>('analytics')
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -47,12 +38,6 @@ export default function IndividualSurveyAnalyticsPage() {
         // Fetch analytics data
         const analyticsResponse = await ApiClient.getAnalytics(surveyId)
         setAnalytics(analyticsResponse)
-        
-        // Fetch audit questions
-        await fetchAuditQuestions()
-        
-        // Fetch audit responses
-        await fetchAuditResponses()
       } catch (err) {
         setError('Failed to load analytics data')
         console.error('Error fetching analytics:', err)
@@ -66,30 +51,6 @@ export default function IndividualSurveyAnalyticsPage() {
     }
   }, [surveyId])
 
-  const fetchAuditQuestions = async () => {
-    try {
-      const response = await fetch(`/api/admin/surveys/${surveyId}/audit-questions`)
-      if (response.ok) {
-        const data = await response.json()
-        setAuditQuestions(data.auditQuestions || [])
-      }
-    } catch (error) {
-      console.error('Error fetching audit questions:', error)
-    }
-  }
-
-  const fetchAuditResponses = async () => {
-    try {
-      const response = await fetch(`/api/admin/surveys/${surveyId}/audit-responses`)
-      if (response.ok) {
-        const data = await response.json()
-        setAuditResponses(data.auditResponses || [])
-      }
-    } catch (error) {
-      console.error('Error fetching audit responses:', error)
-    }
-  }
-
   const handleExport = () => {
     if (!analytics) return
     
@@ -98,8 +59,6 @@ export default function IndividualSurveyAnalyticsPage() {
       overview: analytics.overview,
       departments: analytics.departments,
       questions: analytics.questionAnalytics,
-      auditQuestions,
-      auditResponses,
       exportedAt: new Date().toISOString()
     }
     
@@ -112,37 +71,6 @@ export default function IndividualSurveyAnalyticsPage() {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-  }
-
-  const handleAuditQuestionSave = async () => {
-    setShowAddQuestion(false)
-    setEditingQuestion(null)
-    await fetchAuditQuestions()
-  }
-
-  const handleAuditResponseSave = async () => {
-    await fetchAuditResponses()
-    setActiveTab('audit-analytics')
-  }
-
-  const deleteAuditQuestion = async (questionId: string) => {
-    if (!confirm('Are you sure you want to delete this audit question?')) return
-    
-    try {
-      const response = await fetch(`/api/admin/audit-questions/${questionId}`, {
-        method: 'DELETE'
-      })
-      
-      if (response.ok) {
-        await fetchAuditQuestions()
-        await fetchAuditResponses()
-      } else {
-        alert('Failed to delete audit question')
-      }
-    } catch (error) {
-      console.error('Error deleting audit question:', error)
-      alert('Failed to delete audit question')
-    }
   }
 
   if (loading) {
@@ -273,26 +201,15 @@ export default function IndividualSurveyAnalyticsPage() {
             Survey Analytics
           </button>
           <button
-            onClick={() => setActiveTab('audit-questions')}
+            onClick={() => setActiveTab('audit')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'audit-questions'
+              activeTab === 'audit'
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Settings className="h-4 w-4 mr-2 inline" />
-            Audit Questions ({auditQuestions.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('audit-responses')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'audit-responses'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <MessageSquare className="h-4 w-4 mr-2 inline" />
-            Audit Responses
+            Audit Questions & Responses
           </button>
           <button
             onClick={() => setActiveTab('audit-analytics')}
@@ -302,8 +219,8 @@ export default function IndividualSurveyAnalyticsPage() {
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            <BarChart3 className="h-4 w-4 mr-2 inline" />
-            Audit Analytics
+            <TrendingUp className="h-4 w-4 mr-2 inline" />
+            Audit Analytics Comparison
           </button>
         </div>
 
@@ -555,128 +472,12 @@ export default function IndividualSurveyAnalyticsPage() {
           </>
         )}
 
-        {activeTab === 'audit-questions' && (
-          <div className="space-y-6">
-            {/* Add/Edit Question Form */}
-            {(showAddQuestion || editingQuestion) && (
-              <AuditQuestionForm
-                surveyId={surveyId}
-                question={editingQuestion}
-                onSave={handleAuditQuestionSave}
-                onCancel={() => {
-                  setShowAddQuestion(false)
-                  setEditingQuestion(null)
-                }}
-              />
-            )}
-
-            {/* Audit Questions List */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Audit Questions</CardTitle>
-                    <CardDescription>
-                      Create questions to evaluate and analyze this survey&apos;s data quality and insights.
-                    </CardDescription>
-                  </div>
-                  <Button onClick={() => setShowAddQuestion(true)} disabled={showAddQuestion || editingQuestion}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Question
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {auditQuestions.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Settings className="h-12 w-12 mx-auto mb-4 opacity-50 text-muted-foreground" />
-                    <h3 className="font-semibold mb-2">No Audit Questions</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Create audit questions to evaluate survey data quality and extract insights.
-                    </p>
-                    <Button onClick={() => setShowAddQuestion(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Your First Question
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {auditQuestions.map((question) => (
-                      <div key={question.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded">
-                                {question.question_type.replace('_', ' ').toUpperCase()}
-                              </span>
-                              <span className="text-sm bg-secondary/10 text-secondary px-2 py-1 rounded">
-                                {question.category}
-                              </span>
-                              {question.is_required && (
-                                <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
-                                  Required
-                                </span>
-                              )}
-                            </div>
-                            <h4 className="font-medium mb-1">{question.question_text}</h4>
-                            {question.description && (
-                              <p className="text-sm text-muted-foreground mb-2">{question.description}</p>
-                            )}
-                            {question.survey_audit_question_options && question.survey_audit_question_options.length > 0 && (
-                              <div className="text-xs text-muted-foreground">
-                                Options: {question.survey_audit_question_options.map((opt: any) => opt.option_text).join(', ')}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setEditingQuestion(question)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => deleteAuditQuestion(question.id)}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === 'audit-responses' && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Audit Responses</CardTitle>
-                <CardDescription>
-                  Answer the audit questions to evaluate this survey&lsquo;s data and insights.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AuditResponseForm
-                  surveyId={surveyId}
-                  auditQuestions={auditQuestions}
-                  existingResponses={auditResponses}
-                  onSave={handleAuditResponseSave}
-                />
-              </CardContent>
-            </Card>
-          </div>
+        {activeTab === 'audit' && (
+          <CombinedAuditInterface surveyId={surveyId} />
         )}
 
         {activeTab === 'audit-analytics' && (
-          <AuditAnalytics auditQuestions={auditQuestions} auditResponses={auditResponses} />
+          <AuditAnalyticsComparison surveyId={surveyId} />
         )}
       </div>
     </div>

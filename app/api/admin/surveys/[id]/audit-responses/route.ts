@@ -1,4 +1,3 @@
-
 // app/api/admin/surveys/[id]/audit-responses/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
@@ -10,24 +9,27 @@ export async function GET(
   try {
     const { id: surveyId } = await params
 
+    // Fetch audit responses for this survey
     const { data: auditResponses, error } = await supabase
       .from('survey_audit_responses')
       .select(`
         *,
-        survey_audit_questions (
-          question_text,
-          question_type,
-          category
+        survey_audit_questions!inner (
+          survey_id
         )
       `)
-      .eq('survey_id', surveyId)
+      .eq('survey_audit_questions.survey_id', surveyId)
 
     if (error) {
+      console.error('Supabase error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ auditResponses })
+    return NextResponse.json({
+      auditResponses: auditResponses || []
+    })
   } catch (error) {
+    console.error('Error fetching audit responses:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -39,61 +41,67 @@ export async function POST(
   try {
     const { id: surveyId } = await params
     const body = await request.json()
+    
     const { responses, responded_by } = body
 
-    // Process each response
-    const responsePromises = Object.entries(responses).map(async ([questionId, response]) => {
-      let responseType: 'text' | 'number' | 'array' | 'object'
-      let textResponse = null
-      let numberResponse = null
-      let arrayResponse = null
-      let objectResponse = null
+    // First, delete existing responses for this survey (if updating)
+    const { error: deleteError } = await supabase
+      .from('survey_audit_responses')
+      .delete()
+      .in('survey_audit_question_id', 
+        await supabase
+          .from('survey_audit_questions')
+          .select('id')
+          .eq('survey_id', surveyId)
+          .then(res => res.data?.map(q => q.id) || [])
+      )
 
-      if (typeof response === 'string') {
-        responseType = 'text'
-        textResponse = response
-      } else if (typeof response === 'number') {
-        responseType = 'number'
-        numberResponse = response
-      } else if (Array.isArray(response)) {
-        responseType = 'array'
-        arrayResponse = response
-      } else if (typeof response === 'object' && response !== null) {
-        responseType = 'object'
-        objectResponse = response
-      } else {
-        responseType = 'text'
-        textResponse = String(response)
-      }
-
-      // Upsert the response (insert or update if exists)
-      return supabase
-        .from('survey_audit_responses')
-        .upsert({
-          survey_id: surveyId,
-          survey_audit_question_id: questionId,
-          response_type: responseType,
-          text_response: textResponse,
-          number_response: numberResponse,
-          array_response: arrayResponse,
-          object_response: objectResponse,
-          responded_by: responded_by || 'admin'
-        }, {
-          onConflict: 'survey_id,survey_audit_question_id'
-        })
-    })
-
-    const results = await Promise.all(responsePromises)
-    
-    // Check for errors
-    const errors = results.filter(result => result.error)
-    if (errors.length > 0) {
-      return NextResponse.json({ error: 'Failed to save some responses' }, { status: 500 })
+    if (deleteError) {
+      console.error('Error deleting existing responses:', deleteError)
     }
 
-    return NextResponse.json({ message: 'Audit responses saved successfully' })
+    // Insert new responses
+    const responseInserts = []
+    for (const [questionId, value] of Object.entries(responses)) {
+      if (value !== null && value !== undefined && value !== '') {
+        let responseData: any = {
+          survey_audit_question_id: questionId,
+          responded_by
+        }
+
+        // Determine response type and set appropriate field
+        if (typeof value === 'string') {
+          responseData.response_type = 'text'
+          responseData.text_response = value
+        } else if (typeof value === 'number') {
+          responseData.response_type = 'number'
+          responseData.number_response = value
+        } else if (Array.isArray(value)) {
+          responseData.response_type = 'array'
+          responseData.array_response = value
+        } else if (typeof value === 'object') {
+          responseData.response_type = 'object'
+          responseData.object_response = value
+        }
+
+        responseInserts.push(responseData)
+      }
+    }
+
+    if (responseInserts.length > 0) {
+      const { error: insertError } = await supabase
+        .from('survey_audit_responses')
+        .insert(responseInserts)
+
+      if (insertError) {
+        console.error('Error inserting responses:', insertError)
+        return NextResponse.json({ error: insertError.message }, { status: 500 })
+      }
+    }
+
+    return NextResponse.json({ success: true, count: responseInserts.length })
   } catch (error) {
-    console.log(error)
+    console.error('Error saving audit responses:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -9,30 +9,62 @@ export async function GET(
   try {
     const { id: surveyId } = await params
 
+    // Fetch audit questions with their sections and options
     const { data: auditQuestions, error } = await supabase
       .from('survey_audit_questions')
       .select(`
         *,
-        survey_audit_question_options (*)
+        survey_sections (
+          id,
+          title,
+          description,
+          order_index
+        ),
+        survey_audit_question_options (
+          option_text,
+          order_index
+        )
       `)
       .eq('survey_id', surveyId)
-      .order('order_index')
+      .order('created_at')
 
     if (error) {
+      console.error('Supabase error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Sort options by order_index
-    const questionsWithSortedOptions = auditQuestions?.map(question => ({
-      ...question,
-      survey_audit_question_options: question.survey_audit_question_options?.sort(
-        (a: any, b: any) => a.order_index - b.order_index
-      )
-    }))
+    console.log('Raw audit questions:', auditQuestions)
 
-    return NextResponse.json({ auditQuestions: questionsWithSortedOptions })
+    // Group questions by section
+    const auditQuestionsBySection: Record<string, any> = {}
+    
+    auditQuestions?.forEach(question => {
+      const sectionId = question.section_id || 'no_section'
+      const section = question.survey_sections
+      
+      if (!auditQuestionsBySection[sectionId]) {
+        auditQuestionsBySection[sectionId] = {
+          section: section || {
+            id: 'no_section',
+            title: 'Unassigned Questions',
+            description: 'Questions not assigned to any section',
+            order_index: 999
+          },
+          questions: []
+        }
+      }
+      
+      auditQuestionsBySection[sectionId].questions.push(question)
+    })
+
+    console.log('Grouped audit questions:', auditQuestionsBySection)
+
+    return NextResponse.json({
+      auditQuestionsBySection,
+      totalQuestions: auditQuestions?.length || 0
+    })
   } catch (error) {
-    console.log(error)
+    console.error('Error fetching audit questions:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -44,71 +76,61 @@ export async function POST(
   try {
     const { id: surveyId } = await params
     const body = await request.json()
-    const { 
-      question_text, 
-      question_type, 
-      is_required, 
-      has_other_option, 
-      category, 
+    
+    const {
+      section_id,
+      question_text,
+      question_type,
+      is_required,
+      has_other_option,
       description,
       options,
-      created_by 
+      created_by
     } = body
 
-    // Get the next order index
-    const { data: existingQuestions } = await supabase
-      .from('survey_audit_questions')
-      .select('order_index')
-      .eq('survey_id', surveyId)
-      .order('order_index', { ascending: false })
-      .limit(1)
-
-    const nextOrderIndex = existingQuestions && existingQuestions.length > 0 
-      ? existingQuestions[0].order_index + 1 
-      : 0
-
     // Insert the audit question
-    const { data: auditQuestion, error: questionError } = await supabase
+    const { data: question, error: questionError } = await supabase
       .from('survey_audit_questions')
       .insert({
         survey_id: surveyId,
+        section_id,
         question_text,
         question_type,
-        is_required: is_required ?? true,
-        has_other_option: has_other_option ?? false,
-        order_index: nextOrderIndex,
-        category: category || 'General',
+        is_required: is_required || false,
+        has_other_option: has_other_option || false,
         description,
-        created_by: created_by || 'admin'
+        category: 'audit',
+        created_by
       })
       .select()
       .single()
 
     if (questionError) {
+      console.error('Error creating question:', questionError)
       return NextResponse.json({ error: questionError.message }, { status: 500 })
     }
 
     // Insert options if provided
     if (options && options.length > 0) {
-      const questionOptions = options.map((option: string, index: number) => ({
-        survey_audit_question_id: auditQuestion.id,
-        option_text: option,
+      const optionInserts = options.map((optionText: string, index: number) => ({
+        survey_audit_question_id: question.id,
+        option_text: optionText,
         order_index: index
       }))
 
       const { error: optionsError } = await supabase
         .from('survey_audit_question_options')
-        .insert(questionOptions)
+        .insert(optionInserts)
 
       if (optionsError) {
-        return NextResponse.json({ error: optionsError.message }, { status: 500 })
+        console.error('Error creating options:', optionsError)
+        // Don't fail the request, just log the error
       }
     }
 
-    return NextResponse.json({ auditQuestion }, { status: 201 })
+    return NextResponse.json({ question })
   } catch (error) {
-    console.log(error)
+    console.error('Error creating audit question:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-
