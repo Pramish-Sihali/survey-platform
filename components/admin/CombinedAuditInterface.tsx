@@ -1,8 +1,8 @@
-// components/admin/CombinedAuditInterface.tsx - DEBUG VERSION
+// components/admin/CombinedAuditInterface.tsx - PRODUCTION VERSION
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ChevronDown, ChevronRight, Plus, Edit3, Save, Trash2, Star, CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Edit3, Save, Trash2, Star, Loader2, AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -46,6 +46,17 @@ interface SectionData {
   questions: AuditQuestion[]
 }
 
+interface NewQuestionForm {
+  section_id: string
+  question_text: string
+  question_type: 'text' | 'yes_no' | 'radio' | 'checkbox' | 'rating' | 'select'
+  is_required: boolean
+  has_other_option: boolean
+  description: string
+  category: string
+  options: string[]
+}
+
 interface CombinedAuditInterfaceProps {
   surveyId: string
 }
@@ -57,7 +68,7 @@ const questionTypes = [
   { value: 'checkbox', label: 'Multiple Choice (Multiple)' },
   { value: 'rating', label: '5-Star Rating' },
   { value: 'select', label: 'Dropdown' },
-]
+] as const
 
 const RATING_LABELS = ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
 
@@ -70,23 +81,23 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showAddQuestion, setShowAddQuestion] = useState<string | null>(null)
-  const [debugInfo, setDebugInfo] = useState<any>({})
   const [errors, setErrors] = useState<string[]>([])
+  const [apiStatus, setApiStatus] = useState<'unknown' | 'working' | 'partial' | 'failed'>('unknown')
 
   // New question form state
-  const [newQuestion, setNewQuestion] = useState({
+  const [newQuestion, setNewQuestion] = useState<NewQuestionForm>({
     section_id: '',
     question_text: '',
-    question_type: 'text' as const,
+    question_type: 'text',
     is_required: true,
     has_other_option: false,
     description: '',
-    options: [] as string[]
+    category: 'General',
+    options: []
   })
   const [optionInput, setOptionInput] = useState('')
 
   useEffect(() => {
-    console.log('CombinedAuditInterface: Component mounted with surveyId:', surveyId)
     fetchData()
   }, [surveyId])
 
@@ -94,58 +105,44 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
     try {
       setLoading(true)
       setErrors([])
-      
-      console.log('CombinedAuditInterface: Starting to fetch data for surveyId:', surveyId)
+      setApiStatus('unknown')
       
       // Fetch survey sections
-      console.log('CombinedAuditInterface: Fetching sections...')
       const sectionsResponse = await fetch(`/api/admin/surveys/${surveyId}/survey-sections`)
-      console.log('CombinedAuditInterface: Sections response status:', sectionsResponse.status)
       
       if (sectionsResponse.ok) {
         const sectionsData = await sectionsResponse.json()
-        console.log('CombinedAuditInterface: Sections data:', sectionsData)
         setAvailableSections(sectionsData.sections || [])
-        setDebugInfo(prev => ({ ...prev, sectionsData }))
       } else {
         const error = `Failed to fetch sections: ${sectionsResponse.status}`
-        console.error('CombinedAuditInterface:', error)
-        setErrors(prev => [...prev, error])
+        setErrors((prev: string[]) => [...prev, error])
       }
 
       // Fetch audit questions and responses
-      console.log('CombinedAuditInterface: Fetching audit questions and responses...')
       const [questionsResponse, responsesResponse] = await Promise.all([
         fetch(`/api/admin/surveys/${surveyId}/audit-questions`),
         fetch(`/api/admin/surveys/${surveyId}/audit-responses`)
       ])
 
-      console.log('CombinedAuditInterface: Questions response status:', questionsResponse.status)
-      console.log('CombinedAuditInterface: Responses response status:', responsesResponse.status)
-
       if (questionsResponse.ok) {
         const questionsData = await questionsResponse.json()
-        console.log('CombinedAuditInterface: Questions data:', questionsData)
         setAuditQuestionsBySection(questionsData.auditQuestionsBySection || {})
-        setDebugInfo(prev => ({ ...prev, questionsData }))
+        setApiStatus('working')
         
         // Auto-expand first section
         const firstSectionId = Object.keys(questionsData.auditQuestionsBySection || {})[0]
         if (firstSectionId) {
-          console.log('CombinedAuditInterface: Auto-expanding first section:', firstSectionId)
           setExpandedSections(new Set([firstSectionId]))
-        } else {
-          console.log('CombinedAuditInterface: No sections found to expand')
         }
       } else {
-        const error = `Failed to fetch questions: ${questionsResponse.status}`
-        console.error('CombinedAuditInterface:', error)
-        setErrors(prev => [...prev, error])
+        const errorText = await questionsResponse.text()
+        const error = `Failed to fetch questions: ${questionsResponse.status} - ${errorText}`
+        setErrors((prev: string[]) => [...prev, error])
+        setApiStatus('failed')
       }
 
       if (responsesResponse.ok) {
         const responsesData = await responsesResponse.json()
-        console.log('CombinedAuditInterface: Responses data:', responsesData)
         const responseMap: Record<string, any> = {}
         responsesData.auditResponses?.forEach((response: AuditResponse) => {
           const questionId = response.survey_audit_question_id
@@ -164,17 +161,17 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
               break
           }
         })
-        console.log('CombinedAuditInterface: Parsed response map:', responseMap)
         setResponses(responseMap)
-        setDebugInfo(prev => ({ ...prev, responsesData, responseMap }))
       } else {
         const error = `Failed to fetch responses: ${responsesResponse.status}`
-        console.error('CombinedAuditInterface:', error)
-        setErrors(prev => [...prev, error])
+        setErrors((prev: string[]) => [...prev, error])
+        if (apiStatus === 'working') {
+          setApiStatus('partial')
+        }
       }
     } catch (error) {
-      console.error('CombinedAuditInterface: Error fetching audit data:', error)
-      setErrors(prev => [...prev, `Fetch error: ${error}`])
+      setErrors((prev: string[]) => [...prev, `Fetch error: ${error}`])
+      setApiStatus('failed')
     } finally {
       setLoading(false)
     }
@@ -191,7 +188,7 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
   }
 
   const handleResponseChange = (questionId: string, value: any) => {
-    setResponses(prev => ({ ...prev, [questionId]: value }))
+    setResponses((prev: Record<string, any>) => ({ ...prev, [questionId]: value }))
   }
 
   const handleSave = async () => {
@@ -212,7 +209,6 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
       }
 
       setIsEditing(false)
-      // Optionally show success message
     } catch (error) {
       console.error('Error saving responses:', error)
       alert('Failed to save responses')
@@ -223,7 +219,7 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
 
   const addOption = () => {
     if (optionInput.trim()) {
-      setNewQuestion(prev => ({
+      setNewQuestion((prev: NewQuestionForm) => ({
         ...prev,
         options: [...prev.options, optionInput.trim()]
       }))
@@ -232,7 +228,7 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
   }
 
   const removeOption = (index: number) => {
-    setNewQuestion(prev => ({
+    setNewQuestion((prev: NewQuestionForm) => ({
       ...prev,
       options: prev.options.filter((_, i) => i !== index)
     }))
@@ -264,7 +260,8 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
       })
 
       if (!response.ok) {
-        throw new Error('Failed to create question')
+        const errorText = await response.text()
+        throw new Error(`Failed to create question: ${response.status} - ${errorText}`)
       }
 
       // Reset form
@@ -275,6 +272,7 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
         is_required: true,
         has_other_option: false,
         description: '',
+        category: 'General',
         options: []
       })
       setOptionInput('')
@@ -284,7 +282,7 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
       await fetchData()
     } catch (error) {
       console.error('Error adding question:', error)
-      alert('Failed to add question')
+      alert(`Failed to add question: ${error}`)
     }
   }
 
@@ -463,8 +461,8 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
                 <Label>Question Type</Label>
                 <Select
                   value={newQuestion.question_type}
-                  onValueChange={(value: any) => 
-                    setNewQuestion(prev => ({ ...prev, question_type: value, options: [] }))
+                  onValueChange={(value: 'text' | 'yes_no' | 'radio' | 'checkbox' | 'rating' | 'select') => 
+                    setNewQuestion((prev: NewQuestionForm) => ({ ...prev, question_type: value, options: [] }))
                   }
                 >
                   <SelectTrigger>
@@ -481,46 +479,65 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
               </div>
               
               <div className="space-y-2">
-                <Label>Settings</Label>
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="required"
-                      checked={newQuestion.is_required}
-                      onChange={(e) => setNewQuestion(prev => ({ ...prev, is_required: e.target.checked }))}
-                    />
-                    <Label htmlFor="required" className="text-sm">Required</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="hasOther"
-                      checked={newQuestion.has_other_option}
-                      onChange={(e) => setNewQuestion(prev => ({ ...prev, has_other_option: e.target.checked }))}
-                    />
-                    <Label htmlFor="hasOther" className="text-sm">Has Other</Label>
-                  </div>
-                </div>
+                <Label>Category</Label>
+                <Select
+                  value={newQuestion.category}
+                  onValueChange={(value) => setNewQuestion((prev: NewQuestionForm) => ({ ...prev, category: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="General">General</SelectItem>
+                    <SelectItem value="Data Quality">Data Quality</SelectItem>
+                    <SelectItem value="Response Analysis">Response Analysis</SelectItem>
+                    <SelectItem value="Key Insights">Key Insights</SelectItem>
+                    <SelectItem value="Action Items">Action Items</SelectItem>
+                    <SelectItem value="Priority Assessment">Priority Assessment</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Question Text</Label>
-              <Input
-                placeholder="Enter your question..."
-                value={newQuestion.question_text}
-                onChange={(e) => setNewQuestion(prev => ({ ...prev, question_text: e.target.value }))}
-              />
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Question Text</Label>
+                <Input
+                  placeholder="Enter your question..."
+                  value={newQuestion.question_text}
+                  onChange={(e) => setNewQuestion((prev: NewQuestionForm) => ({ ...prev, question_text: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input
+                  placeholder="Optional description..."
+                  value={newQuestion.description}
+                  onChange={(e) => setNewQuestion((prev: NewQuestionForm) => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Input
-                placeholder="Optional description..."
-                value={newQuestion.description}
-                onChange={(e) => setNewQuestion(prev => ({ ...prev, description: e.target.value }))}
-              />
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="required"
+                  checked={newQuestion.is_required}
+                  onChange={(e) => setNewQuestion((prev: NewQuestionForm) => ({ ...prev, is_required: e.target.checked }))}
+                />
+                <Label htmlFor="required" className="text-sm">Required</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="hasOther"
+                  checked={newQuestion.has_other_option}
+                  onChange={(e) => setNewQuestion((prev: NewQuestionForm) => ({ ...prev, has_other_option: e.target.checked }))}
+                />
+                <Label htmlFor="hasOther" className="text-sm">Has Other</Label>
+              </div>
             </div>
 
             {requiresOptions && (
@@ -585,38 +602,47 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
 
   return (
     <div className="space-y-6">
-      {/* Debug Information */}
-      {process.env.NODE_ENV === 'development' && (
-        <Card className="border-yellow-200 bg-yellow-50">
+      {/* Error Display */}
+      {apiStatus !== 'working' && errors.length > 0 && (
+        <Card className={cn(
+          "border-2",
+          apiStatus === 'failed' ? "border-red-200 bg-red-50" : "border-yellow-200 bg-yellow-50"
+        )}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-yellow-800">
+            <CardTitle className={cn(
+              "flex items-center gap-2",
+              apiStatus === 'failed' ? "text-red-800" : "text-yellow-800"
+            )}>
               <AlertTriangle className="h-5 w-5" />
-              Debug Information
+              {apiStatus === 'failed' ? 'Connection Issues' : 'Partial Functionality'}
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-yellow-800">
+          <CardContent className={cn(
+            "text-sm",
+            apiStatus === 'failed' ? "text-red-700" : "text-yellow-700"
+          )}>
             <div className="space-y-2">
-              <div><strong>Survey ID:</strong> {surveyId}</div>
-              <div><strong>Available Sections:</strong> {availableSections.length}</div>
-              <div><strong>Audit Questions Sections:</strong> {Object.keys(auditQuestionsBySection).length}</div>
-              <div><strong>Total Questions:</strong> {Object.values(auditQuestionsBySection).reduce((sum, section) => sum + section.questions.length, 0)}</div>
-              <div><strong>Responses:</strong> {Object.keys(responses).length}</div>
               {errors.length > 0 && (
-                <div className="text-red-600">
-                  <strong>Errors:</strong>
-                  <ul className="list-disc list-inside ml-4">
+                <div>
+                  <strong>Issues:</strong>
+                  <ul className="list-disc list-inside ml-4 mt-1">
                     {errors.map((error, index) => (
                       <li key={index}>{error}</li>
                     ))}
                   </ul>
                 </div>
               )}
-              <details className="mt-4">
-                <summary className="cursor-pointer font-medium">Raw Debug Data</summary>
-                <pre className="mt-2 p-2 bg-yellow-100 rounded text-xs overflow-auto max-h-40">
-                  {JSON.stringify(debugInfo, null, 2)}
-                </pre>
-              </details>
+              <div className="flex gap-2 mt-4">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={fetchData}
+                  className="text-current border-current hover:bg-current/10"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -655,7 +681,7 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
       </div>
 
       {/* Sections */}
-      {Object.keys(auditQuestionsBySection).length === 0 ? (
+      {Object.keys(auditQuestionsBySection).length === 0 && apiStatus === 'working' ? (
         <Card>
           <CardContent className="text-center py-12">
             <Plus className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -741,6 +767,9 @@ export function CombinedAuditInterface({ surveyId }: CombinedAuditInterfaceProps
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
                               {questionTypes.find(t => t.value === question.question_type)?.label}
+                            </span>
+                            <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded">
+                              {question.category}
                             </span>
                             {question.is_required && (
                               <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
