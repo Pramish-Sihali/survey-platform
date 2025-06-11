@@ -158,8 +158,9 @@ export function AuditAnalyticsComparison({ surveyId }: AuditAnalyticsComparisonP
       audit => audit.section_id === surveySection.section_id
     )
     
+    // Fixed: Added null check for auditSection and use optional chaining
     const difference = surveySection.rating_average !== null && auditSection?.audit_rating_average !== null
-      ? auditSection.audit_rating_average - surveySection.rating_average
+      ? (auditSection?.audit_rating_average ?? 0) - surveySection.rating_average
       : null
 
     return {
