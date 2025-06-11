@@ -1,4 +1,6 @@
 // components/admin/AuditAnalytics.tsx
+// components/admin/AuditAnalytics.tsx
+
 'use client'
 
 import { Star, CheckCircle, XCircle } from 'lucide-react'
