@@ -1,4 +1,4 @@
-// app/api/companies/[id]/route.ts - Company Detail API Endpoint
+// app/api/companies/[id]/route.ts - Fixed Company Detail API Endpoint
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { Company, CompanyWithStats, UserRole } from '@/lib/utils'
@@ -14,12 +14,6 @@ interface UpdateCompanyRequest {
   max_users?: number
   max_surveys?: number
   is_active?: boolean
-}
-
-interface RouteParams {
-  params: {
-    id: string
-  }
 }
 
 // ============================================================================
@@ -142,10 +136,13 @@ function validateCompanyUpdateData(data: UpdateCompanyRequest): string | null {
 // GET COMPANY BY ID
 // ============================================================================
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const companyId = params.id
+    const { id: companyId } = await params
 
     // Only super admins can view companies
     if (!isSuperAdmin(authenticatedUser.role)) {
@@ -188,10 +185,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // UPDATE COMPANY
 // ============================================================================
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const companyId = params.id
+    const { id: companyId } = await params
     const body: UpdateCompanyRequest = await request.json()
 
     // Only super admins can update companies
@@ -374,10 +374,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 // DELETE COMPANY (SOFT DELETE)
 // ============================================================================
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const companyId = params.id
+    const { id: companyId } = await params
 
     // Only super admins can delete companies
     if (!isSuperAdmin(authenticatedUser.role)) {

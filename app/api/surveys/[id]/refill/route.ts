@@ -1,4 +1,4 @@
-// app/api/surveys/[id]/refill/route.ts - Survey Refill API Endpoint
+// app/api/surveys/[id]/refill/route.ts - Fixed Survey Refill API Endpoint
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { UserRole } from '@/lib/utils'
@@ -12,12 +12,6 @@ interface RefillRequestBody {
   assignment_id?: string
   reason?: string
   admin_notes?: string
-}
-
-interface RouteParams {
-  params: {
-    id: string
-  }
 }
 
 // ============================================================================
@@ -107,10 +101,13 @@ async function validateRefillRequest(surveyId: string, userId: string, assignmen
 // REQUEST SURVEY REFILL
 // ============================================================================
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const surveyId = params.id
+    const { id: surveyId } = await params
     const body: RefillRequestBody = await request.json()
 
     if (!surveyId) {
@@ -271,10 +268,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 // GET REFILL HISTORY
 // ============================================================================
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const surveyId = params.id
+    const { id: surveyId } = await params
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('user_id')
 

@@ -29,16 +29,16 @@ export function EmployeeInfoForm({ employeeInfo, setEmployeeInfo, onSubmit }: Em
         console.error('Error fetching departments:', err)
         // Fallback to hardcoded departments if API fails
         setDepartments([
-          { id: '1', name: 'Human Resources', description: 'HR Department', is_active: true, created_at: '', updated_at: '' },
-          { id: '2', name: 'Engineering', description: 'Engineering Department', is_active: true, created_at: '', updated_at: '' },
-          { id: '3', name: 'Marketing', description: 'Marketing Department', is_active: true, created_at: '', updated_at: '' },
-          { id: '4', name: 'Sales', description: 'Sales Department', is_active: true, created_at: '', updated_at: '' },
-          { id: '5', name: 'Finance', description: 'Finance Department', is_active: true, created_at: '', updated_at: '' },
-          { id: '6', name: 'Operations', description: 'Operations Department', is_active: true, created_at: '', updated_at: '' },
-          { id: '7', name: 'Customer Service', description: 'Customer Service Department', is_active: true, created_at: '', updated_at: '' },
-          { id: '8', name: 'Legal', description: 'Legal Department', is_active: true, created_at: '', updated_at: '' },
-          { id: '9', name: 'IT Support', description: 'IT Support Department', is_active: true, created_at: '', updated_at: '' },
-          { id: '10', name: 'Research & Development', description: 'R&D Department', is_active: true, created_at: '', updated_at: '' }
+          { id: '1', company_id: 'fallback', name: 'Human Resources', description: 'HR Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '2', company_id: 'fallback', name: 'Engineering', description: 'Engineering Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '3', company_id: 'fallback', name: 'Marketing', description: 'Marketing Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '4', company_id: 'fallback', name: 'Sales', description: 'Sales Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '5', company_id: 'fallback', name: 'Finance', description: 'Finance Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '6', company_id: 'fallback', name: 'Operations', description: 'Operations Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '7', company_id: 'fallback', name: 'Customer Service', description: 'Customer Service Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '8', company_id: 'fallback', name: 'Legal', description: 'Legal Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '9', company_id: 'fallback', name: 'IT Support', description: 'IT Support Department', is_active: true, created_at: '', updated_at: '' },
+          { id: '10', company_id: 'fallback', name: 'Research & Development', description: 'R&D Department', is_active: true, created_at: '', updated_at: '' }
         ])
       } finally {
         setLoadingDepartments(false)

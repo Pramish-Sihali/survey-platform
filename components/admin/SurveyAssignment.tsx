@@ -68,7 +68,6 @@ export default function SurveyAssignment({ className }: SurveyAssignmentProps) {
       ])
 
       setSurveys(surveysRes.surveys || [])
-      setUsers(usersRes.users || [])
       setAssignments(assignmentsRes.assignments || [])
     } catch (error) {
       console.error('Error loading data:', error)

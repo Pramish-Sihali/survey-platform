@@ -1,4 +1,4 @@
-// app/api/comments/[id]/route.ts - Comment Detail API Endpoint
+// app/api/comments/[id]/route.ts - Fixed Comment Detail API Endpoint
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { SurveyComment, CommentWithUser, UserRole } from '@/lib/utils'
@@ -10,12 +10,6 @@ import { SurveyComment, CommentWithUser, UserRole } from '@/lib/utils'
 interface UpdateCommentRequest {
   comment_text?: string
   is_read?: boolean
-}
-
-interface RouteParams {
-  params: {
-    id: string
-  }
 }
 
 // ============================================================================
@@ -125,10 +119,13 @@ function canMarkAsRead(userRole: UserRole, userCompanyId: string, userId: string
 // GET COMMENT BY ID
 // ============================================================================
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const commentId = params.id
+    const { id: commentId } = await params
 
     if (!commentId) {
       return NextResponse.json(
@@ -171,10 +168,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // UPDATE COMMENT
 // ============================================================================
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const commentId = params.id
+    const { id: commentId } = await params
     const body: UpdateCommentRequest = await request.json()
 
     if (!commentId) {
@@ -294,10 +294,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 // DELETE COMMENT
 // ============================================================================
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const commentId = params.id
+    const { id: commentId } = await params
 
     if (!commentId) {
       return NextResponse.json(
@@ -381,10 +384,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 // MARK AS READ (PATCH)
 // ============================================================================
 
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const commentId = params.id
+    const { id: commentId } = await params
 
     if (!commentId) {
       return NextResponse.json(

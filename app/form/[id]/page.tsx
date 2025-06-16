@@ -140,22 +140,37 @@ export default function DynamicFormPage() {
           return response !== undefined && response !== null && response !== ''
         })
       )
-
+  
       if (!allRequiredAnswered) {
         alert('Please answer all required questions before submitting.')
         return
       }
       
-      // Convert form data to API format
-      const submissionData = convertFormResponseToApiFormat(
-        surveyId,
-        employeeInfo,
-        formResponses,
-        completionTimeMinutes
-      )
+      // Quick fix: Create a different submission format for public forms
+      // Since this is a public form without user authentication
+      const submissionData = {
+        survey_id: surveyId,
+        employee_info: employeeInfo,  // Include the full employee info
+        responses: formResponses,
+        completion_time_minutes: completionTimeMinutes,
+        is_refill: false,
+        response_attempt: 1,
+        submitted_at: new Date().toISOString()
+      }
       
-      // Submit to backend
-      await ApiClient.submitResponse(submissionData)
+      // Submit to a different endpoint for public forms
+      // You'll need to create this endpoint or modify the existing one
+      const response = await fetch(`/api/surveys/${surveyId}/public-response`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      })
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
       
       // Move to completion step
       setCurrentStep(totalSteps + 1)

@@ -8,6 +8,7 @@ import { Survey, SurveySection, Question, QuestionOption, UserRole } from '@/lib
 // ============================================================================
 
 interface CreateSurveyRequest {
+  company_id: boolean
   title: string
   description?: string
   allows_refill?: boolean
@@ -134,15 +135,15 @@ async function getSurveysWithDetails(filters: {
     return (data || []).map(survey => ({
       ...survey,
       survey_sections: (survey.survey_sections || [])
-        .sort((a, b) => a.order_index - b.order_index)
-        .map(section => ({
+        .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
+        .map((section: { questions: any }) => ({
           ...section,
           questions: (section.questions || [])
-            .sort((a, b) => a.order_index - b.order_index)
-            .map(question => ({
+            .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
+            .map((question: { question_options: any }) => ({
               ...question,
               question_options: (question.question_options || [])
-                .sort((a, b) => a.order_index - b.order_index)
+                .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
             }))
         }))
     })) as Survey[]

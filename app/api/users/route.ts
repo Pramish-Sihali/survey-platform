@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcrypt'
 import { supabase } from '@/lib/supabase'
-import { UserWithProfile, UserRole, User, UserProfile } from '@/lib/utils'
+import { UserWithProfile, UserRole, User, UserProfile, SafeUserWithProfile, UsersResponse } from '@/lib/utils'
 
 // ============================================================================
 // TYPES
@@ -15,11 +15,6 @@ interface CreateUserRequest {
   role: UserRole
   company_id: string
   profile?: Partial<UserProfile>
-}
-
-interface UsersResponse {
-  users: UserWithProfile[]
-  total: number
 }
 
 // ============================================================================
@@ -100,7 +95,20 @@ async function getUsersWithProfiles(filters: {
       const department = user.departments?.[0]?.department_id
 
       return {
-        ...user,
+        // Include ALL user properties, including password_hash
+        id: user.id,
+        company_id: user.company_id,
+        email: user.email,
+        password_hash: user.password_hash, // Fix: Include this required property
+        name: user.name,
+        role: user.role,
+        is_active: user.is_active,
+        last_login: user.last_login,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+        created_by: user.created_by,
+        
+        // Add profile and company information
         company_name: company?.name || null,
         designation: profile.designation || null,
         department_id: profile.department_id || null,
@@ -184,10 +192,10 @@ export async function GET(request: NextRequest) {
     const endIndex = startIndex + limit
     const paginatedUsers = users.slice(startIndex, endIndex)
 
-    // Remove sensitive information
-    const sanitizedUsers = paginatedUsers.map(user => {
+    // Remove sensitive information before returning
+    const sanitizedUsers: SafeUserWithProfile[] = paginatedUsers.map(user => {
       const { password_hash, ...userWithoutPassword } = user
-      return userWithoutPassword
+      return userWithoutPassword as SafeUserWithProfile
     })
 
     const response: UsersResponse = {

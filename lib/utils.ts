@@ -1,4 +1,4 @@
-// lib/utils.ts - Multi-Tenant B2B Survey Platform (FIXED)
+// lib/utils.ts - Multi-Tenant B2B Survey Platform (UPDATED WITH SANITIZED TYPES)
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -75,6 +75,20 @@ export interface UserWithProfile extends User {
   hire_date?: string | null
   is_profile_complete?: boolean
   department_name?: string | null
+}
+
+// ============================================================================
+// SANITIZED USER TYPES FOR API RESPONSES
+// ============================================================================
+
+// Sanitized user type without sensitive information (password_hash removed)
+export interface SafeUserWithProfile extends Omit<UserWithProfile, 'password_hash'> {
+  // All properties from UserWithProfile except password_hash
+}
+
+// Safe User type without password_hash
+export interface SafeUser extends Omit<User, 'password_hash'> {
+  // All properties from User except password_hash
 }
 
 // Department Types (updated for multi-tenancy)
@@ -278,7 +292,7 @@ export type FormResponseValue =
 export type FormResponses = Record<string, FormResponseValue>
 
 // ============================================================================
-// API RESPONSE TYPES
+// UPDATED API RESPONSE TYPES (WITH SANITIZED USERS)
 // ============================================================================
 
 export interface ApiResponse<T> {
@@ -287,14 +301,14 @@ export interface ApiResponse<T> {
   message?: string
 }
 
-// User Management API Responses
+// User Management API Responses (UPDATED)
 export interface UsersResponse {
-  users: UserWithProfile[]
+  users: SafeUserWithProfile[]  // CHANGED: Now uses sanitized type
   total?: number
 }
 
 export interface UserDetailResponse {
-  user: UserWithProfile
+  user: SafeUserWithProfile  // CHANGED: Now uses sanitized type
 }
 
 // Company Management API Responses
@@ -358,36 +372,99 @@ export interface AnalyticsResponse {
 }
 
 // ============================================================================
-// UTILITY FUNCTIONS
+// USER SANITIZATION UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Remove sensitive information (password_hash) from a single user object
+ */
+export function sanitizeUser(user: UserWithProfile): SafeUserWithProfile {
+  const { password_hash, ...sanitizedUser } = user
+  return sanitizedUser
+}
+
+/**
+ * Remove sensitive information from an array of user objects
+ */
+export function sanitizeUsers(users: UserWithProfile[]): SafeUserWithProfile[] {
+  return users.map(user => sanitizeUser(user))
+}
+
+/**
+ * Remove sensitive information from a basic User object
+ */
+export function sanitizeBasicUser(user: User): SafeUser {
+  const { password_hash, ...sanitizedUser } = user
+  return sanitizedUser
+}
+
+/**
+ * Remove sensitive information from an array of basic User objects
+ */
+export function sanitizeBasicUsers(users: User[]): SafeUser[] {
+  return users.map(user => sanitizeBasicUser(user))
+}
+
+// ============================================================================
+// TYPE GUARDS AND VALIDATION
+// ============================================================================
+
+/**
+ * Check if a user object has been sanitized (no password_hash)
+ */
+export function isSanitizedUser(user: any): user is SafeUserWithProfile {
+  return user && typeof user === 'object' && !('password_hash' in user)
+}
+
+/**
+ * Check if a user object contains sensitive data
+ */
+export function isUnsanitizedUser(user: any): user is UserWithProfile {
+  return user && typeof user === 'object' && 'password_hash' in user
+}
+
+/**
+ * Check if a basic user object has been sanitized
+ */
+export function isSanitizedBasicUser(user: any): user is SafeUser {
+  return user && typeof user === 'object' && !('password_hash' in user)
+}
+
+// ============================================================================
+// ROLE-BASED HELPER FUNCTIONS
 // ============================================================================
 
 // Role-based helper functions
-export function isSuperAdmin(user: User | UserWithProfile): boolean {
+export function isSuperAdmin(user: User | UserWithProfile | SafeUserWithProfile): boolean {
   return user.role === 'super_admin'
 }
 
-export function isCompanyAdmin(user: User | UserWithProfile): boolean {
+export function isCompanyAdmin(user: User | UserWithProfile | SafeUserWithProfile): boolean {
   return user.role === 'company_admin'
 }
 
-export function isCompanyUser(user: User | UserWithProfile): boolean {
+export function isCompanyUser(user: User | UserWithProfile | SafeUserWithProfile): boolean {
   return user.role === 'company_user'
 }
 
-export function hasAdminAccess(user: User | UserWithProfile): boolean {
+export function hasAdminAccess(user: User | UserWithProfile | SafeUserWithProfile): boolean {
   return user.role === 'super_admin' || user.role === 'company_admin'
 }
 
-export function canManageCompany(user: User | UserWithProfile, companyId: string): boolean {
+export function canManageCompany(user: User | UserWithProfile | SafeUserWithProfile, companyId: string): boolean {
   if (user.role === 'super_admin') return true
   if (user.role === 'company_admin' && user.company_id === companyId) return true
   return false
 }
 
-export function canAccessSurvey(user: User | UserWithProfile, survey: Survey): boolean {
+export function canAccessSurvey(user: User | UserWithProfile | SafeUserWithProfile, survey: Survey): boolean {
   if (user.role === 'super_admin') return true
   return user.company_id === survey.company_id
 }
+
+// ============================================================================
+// DATE UTILITIES
+// ============================================================================
 
 // Date utilities
 export function formatDate(dateString: string): string {
@@ -410,6 +487,10 @@ export function isDateInRange(startDate: string | null, endDate: string | null):
   
   return true
 }
+
+// ============================================================================
+// FORM CONVERSION UTILITIES
+// ============================================================================
 
 // Form conversion utilities (for backward compatibility)
 export function convertSurveyToFormSteps(survey: Survey): FormStep[] {
@@ -535,7 +616,7 @@ export class ApiClient {
   // AUTHENTICATION METHODS
   // ============================================================================
 
-  static async login(email: string, password: string): Promise<{ user: UserWithProfile; token: string }> {
+  static async login(email: string, password: string): Promise<{ user: SafeUserWithProfile; token: string }> {
     return this.post('/auth/login', { email, password })
   }
 
@@ -586,11 +667,11 @@ export class ApiClient {
     return this.get(`/users/${id}`)
   }
 
-  static async createUser(data: Partial<User> & { profile?: Partial<UserProfile> }): Promise<{ user: UserWithProfile }> {
+  static async createUser(data: Partial<User> & { profile?: Partial<UserProfile> }): Promise<{ user: SafeUserWithProfile }> {
     return this.post('/users', data)
   }
 
-  static async updateUser(id: string, data: Partial<User>): Promise<{ user: UserWithProfile }> {
+  static async updateUser(id: string, data: Partial<User>): Promise<{ user: SafeUserWithProfile }> {
     return this.put(`/users/${id}`, data)
   }
 
@@ -602,7 +683,7 @@ export class ApiClient {
     return this.delete(`/users/${id}`)
   }
 
-  static async inviteUser(email: string, name: string, role: UserRole, companyId: string): Promise<{ user: UserWithProfile }> {
+  static async inviteUser(email: string, name: string, role: UserRole, companyId: string): Promise<{ user: SafeUserWithProfile }> {
     return this.post('/users/invite', { email, name, role, company_id: companyId })
   }
 

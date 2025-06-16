@@ -27,11 +27,8 @@ interface UpdateProfileRequest {
   hire_date?: string
 }
 
-interface RouteParams {
-  params: {
-    id: string
-  }
-}
+// Fix: Remove the RouteParams interface and use inline typing
+// The second parameter should match Next.js's expected structure directly
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -133,10 +130,14 @@ async function getUserWithProfile(userId: string): Promise<UserWithProfile | nul
 // GET USER BY ID
 // ============================================================================
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+// Fix: Use inline typing that matches Next.js structure
+export async function GET(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const userId = params.id
+    const { id: userId } = await params 
 
     if (!userId) {
       return NextResponse.json(
@@ -182,10 +183,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // UPDATE USER
 // ============================================================================
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const userId = params.id
+    const { id: userId } = await params 
     const body: UpdateUserRequest = await request.json()
 
     if (!userId) {
@@ -337,10 +341,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 // DELETE USER (SOFT DELETE)
 // ============================================================================
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const userId = params.id
+    const { id: userId } = await params 
 
     if (!userId) {
       return NextResponse.json(
@@ -432,10 +439,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 // UPDATE USER PROFILE
 // ============================================================================
 
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export async function PATCH(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const userId = params.id
+    const { id: userId } = await params 
     const body: UpdateProfileRequest = await request.json()
 
     if (!userId) {

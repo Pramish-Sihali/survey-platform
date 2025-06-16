@@ -1,4 +1,4 @@
-// app/api/survey-assignments/[id]/route.ts - Assignment Detail API Endpoint (FIXED)
+// app/api/survey-assignments/[id]/route.ts - Fixed Assignment Detail API Endpoint
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { SurveyAssignment, SurveyAssignmentWithDetails, AssignmentStatus, UserRole } from '@/lib/utils'
@@ -15,12 +15,6 @@ interface UpdateAssignmentRequest {
 
 interface RefillRequest {
   reason?: string
-}
-
-interface RouteParams {
-  params: {
-    id: string
-  }
 }
 
 // ============================================================================
@@ -118,10 +112,13 @@ function canManageAssignment(userRole: UserRole, userCompanyId: string, assignme
 // GET ASSIGNMENT BY ID
 // ============================================================================
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const assignmentId = params.id
+    const { id: assignmentId } = await params
 
     if (!assignmentId) {
       return NextResponse.json(
@@ -164,10 +161,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // UPDATE ASSIGNMENT
 // ============================================================================
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const assignmentId = params.id
+    const { id: assignmentId } = await params
     const body: UpdateAssignmentRequest = await request.json()
 
     if (!assignmentId) {
@@ -280,10 +280,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 // DELETE ASSIGNMENT
 // ============================================================================
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const assignmentId = params.id
+    const { id: assignmentId } = await params
 
     if (!assignmentId) {
       return NextResponse.json(
@@ -356,10 +359,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 // REQUEST REFILL
 // ============================================================================
 
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
-    const assignmentId = params.id
+    const { id: assignmentId } = await params
     const body: RefillRequest = await request.json()
 
     if (!assignmentId) {
