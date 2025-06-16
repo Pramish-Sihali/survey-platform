@@ -2,7 +2,7 @@
 
 // components/comments/CommentForm.tsx - Comment Form Component
 import { useState } from 'react'
-import { ApiClient, CommentType, UserWithProfile } from '@/lib/utils'
+import { ApiClient, CommentType, UserWithProfile } from '@/lib'
 import { cn } from '@/lib/utils'
 
 // ============================================================================

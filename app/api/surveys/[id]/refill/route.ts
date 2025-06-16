@@ -1,7 +1,7 @@
 // app/api/surveys/[id]/refill/route.ts - Fixed Survey Refill API Endpoint
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { UserRole } from '@/lib/utils'
+import { UserRole } from '@/lib'
 
 // ============================================================================
 // TYPES

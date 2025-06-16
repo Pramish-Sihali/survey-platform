@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcrypt'
 import { supabase } from '@/lib/supabase'
-import { UserWithProfile, UserRole, UserProfile } from '@/lib/utils'
+import { UserWithProfile, UserRole, UserProfile } from '@/lib'
 
 // ============================================================================
 // TYPES

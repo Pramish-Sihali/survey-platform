@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { CheckCircle, Home, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { EmployeeInfo } from '@/lib/utils'
+import { EmployeeInfo } from '@/lib'
 
 interface FormCompleteProps {
   employeeInfo: EmployeeInfo

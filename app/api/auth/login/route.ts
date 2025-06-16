@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { supabase } from '@/lib/supabase'
-import { UserWithProfile } from '@/lib/utils'
+import { UserWithProfile } from '@/lib/'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-change-in-production'
 

@@ -3,7 +3,7 @@
 // components/auth/LoginForm.tsx - Login Form Component
 import { useState, useEffect } from 'react'
 import { AuthService, ValidationUtils, RoleManager, type LoginCredentials } from '@/lib/auth'
-import { UserWithProfile } from '@/lib/utils'
+import { UserWithProfile } from '@/lib'
 import { cn } from '@/lib/utils'
 
 // ============================================================================

@@ -1,7 +1,7 @@
 // app/api/survey-assignments/route.ts - Survey Assignments API Endpoint (FIXED)
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { SurveyAssignment, SurveyAssignmentWithDetails, AssignmentStatus, UserRole } from '@/lib/utils'
+import { SurveyAssignment, SurveyAssignmentWithDetails, AssignmentStatus, UserRole } from '@/lib/'
 
 // ============================================================================
 // TYPES

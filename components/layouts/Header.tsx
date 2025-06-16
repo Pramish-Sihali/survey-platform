@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Menu, Bell, Search, User, LogOut, Settings, ChevronDown } from 'lucide-react'
 import { AuthService } from '@/lib/auth'
-import { UserWithProfile } from '@/lib/utils'
+import { UserWithProfile } from '@/lib'
 
 interface HeaderProps {
   user: UserWithProfile

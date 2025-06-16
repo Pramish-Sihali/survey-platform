@@ -2,7 +2,7 @@
 
 // components/admin/SurveyAssignment.tsx - Survey Assignment Component
 import { useState, useEffect } from 'react'
-import { ApiClient, Survey, UserWithProfile, SurveyAssignmentWithDetails, AssignmentStatus } from '@/lib/utils'
+import { ApiClient, Survey, UserWithProfile, SurveyAssignmentWithDetails, AssignmentStatus } from '@/lib/'
 import { cn } from '@/lib/utils'
 
 // ============================================================================
@@ -93,7 +93,7 @@ export default function SurveyAssignment({ className }: SurveyAssignmentProps) {
       setIsCreating(true)
       setError('')
 
-      await ApiClient.createAssignment({
+      await ApiClient.createAssignments({
         survey_id: formData.survey_id,
         user_ids: formData.user_ids,
         notes: formData.notes || undefined,

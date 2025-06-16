@@ -105,10 +105,11 @@ async function getCompanyWithStats(companyId: string): Promise<CompanyWithStats 
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
+    const params = await context.params
     const companyId = params.id
 
     // Only super admins can view company details
@@ -158,10 +159,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
+    const params = await context.params
     const companyId = params.id
     const body: UpdateCompanyRequest = await request.json()
 
@@ -349,10 +351,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const authenticatedUser = getAuthenticatedUser(request)
+    const params = await context.params
     const companyId = params.id
 
     // Only super admins can delete companies

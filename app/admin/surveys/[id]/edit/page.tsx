@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Survey, ApiClient } from '@/lib/utils'
+import { Survey, ApiClient } from '@/lib/'
 
 export default function EditSurveyPage() {
   const params = useParams()

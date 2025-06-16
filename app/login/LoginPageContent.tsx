@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import LoginForm from '@/components/auth/LoginForm'
 import { AuthService, RoleManager } from '@/lib/auth'
-import { UserWithProfile } from '@/lib/utils'
+import { UserWithProfile } from '@/lib/'
 
 // ============================================================================
 // LOGIN PAGE CONTENT COMPONENT

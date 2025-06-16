@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import { UserWithProfile } from '@/lib/utils'
+import { UserWithProfile } from '@/lib'
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
 import { Footer } from './Footer'

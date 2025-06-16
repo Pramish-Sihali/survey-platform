@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Department } from '@/lib/utils'
+import { Department } from '@/lib'
 
 interface DepartmentFormData {
   id?: string

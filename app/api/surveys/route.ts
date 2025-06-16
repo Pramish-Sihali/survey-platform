@@ -1,7 +1,7 @@
 // app/api/surveys/route.ts - Multi-Tenant Surveys API Endpoint
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { Survey, SurveySection, Question, QuestionOption, UserRole } from '@/lib/utils'
+import { Survey, SurveySection, Question, QuestionOption, UserRole } from '@/lib'
 
 // ============================================================================
 // TYPES

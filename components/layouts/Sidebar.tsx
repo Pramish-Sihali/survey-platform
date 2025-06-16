@@ -4,7 +4,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { X } from 'lucide-react'
-import { UserWithProfile } from '@/lib/utils'
+import { UserWithProfile } from '@/lib'
 import { RoleManager } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 

@@ -20,7 +20,7 @@ import {
   ApiClient,
   convertSurveyToFormSteps,
   isDateInRange
-} from '@/lib/utils'
+} from '@/lib'
 
 export default function DynamicFormPage() {
   const params = useParams()

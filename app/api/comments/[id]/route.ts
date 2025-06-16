@@ -1,7 +1,7 @@
 // app/api/comments/[id]/route.ts - Fixed Comment Detail API Endpoint
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { SurveyComment, CommentWithUser, UserRole } from '@/lib/utils'
+import { SurveyComment, CommentWithUser, UserRole } from '@/lib'
 
 // ============================================================================
 // TYPES

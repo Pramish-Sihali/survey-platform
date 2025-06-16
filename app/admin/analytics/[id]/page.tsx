@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress'
 
 import { AuthenticatedLayout } from '@/components/layouts/AuthenticatedLayout'
 import { AuthService } from '@/lib/auth'
-import { Survey, ApiClient ,  UserWithProfile,  AnalyticsResponse  } from '@/lib/utils'
+import { Survey, ApiClient ,  UserWithProfile,  AnalyticsResponse  } from '@/lib'
 import { CombinedAuditInterface } from '@/components/admin/CombinedAuditInterface'
 import { AuditAnalyticsComparison } from '@/components/admin/AuditAnalyticsComparison'
 
@@ -50,30 +50,30 @@ export default function IndividualSurveyAnalyticsPage() {
 
       
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        setLoading(true)
+  // useEffect(() => {
+  //   const fetchAnalytics = async () => {
+  //     try {
+  //       setLoading(true)
         
-        // Fetch survey details
-        const surveyResponse = await ApiClient.getSurvey(surveyId)
-        setSurvey(surveyResponse.survey)
+  //       // Fetch survey details
+  //       const surveyResponse = await ApiClient.getSurvey(surveyId)
+  //       setSurvey(surveyResponse.survey)
         
-        // Fetch analytics data
-        const analyticsResponse = await ApiClient.getAnalytics(surveyId)
-        setAnalytics(analyticsResponse)
-      } catch (err) {
-        setError('Failed to load analytics data')
-        console.error('Error fetching analytics:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
+  //       // Fetch analytics data
+  //       const analyticsResponse = await ApiClient.getAnalytics(surveyId)
+  //       setAnalytics(analyticsResponse)
+  //     } catch (err) {
+  //       setError('Failed to load analytics data')
+  //       console.error('Error fetching analytics:', err)
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
 
-    if (surveyId) {
-      fetchAnalytics()
-    }
-  }, [surveyId])
+  //   if (surveyId) {
+  //     fetchAnalytics()
+  //   }
+  // }, [surveyId])
 
   const handleExport = () => {
     if (!analytics) return

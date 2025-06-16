@@ -31,6 +31,9 @@ import {
 // ============================================================================
 
 export class ApiClient {
+  static getDepartments() {
+    throw new Error('Method not implemented.')
+  }
   private static baseUrl = '/api'
   private static authToken: string | null = null
 

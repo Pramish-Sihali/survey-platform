@@ -1,7 +1,7 @@
 // app/api/comments/route.ts - Comments API Endpoint
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { SurveyComment, CommentWithUser, CommentType, UserRole } from '@/lib/utils'
+import { SurveyComment, CommentWithUser, CommentType, UserRole } from '@/lib'
 
 // ============================================================================
 // TYPES

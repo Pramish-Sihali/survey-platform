@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress'
 import { EmployeeInfoForm } from '@/components/forms/EmployeeInfoForm'
 import { QuestionForm } from '@/components/forms/QuestionForm'
 import { FormComplete } from '@/components/forms/FormComplete'
-import { EmployeeInfo, FormStep, FormResponses, FormResponseValue } from '@/lib/utils'
+import { EmployeeInfo, FormStep, FormResponses, FormResponseValue } from '@/lib/'
 
 // Mock data - this would come from your backend
 const mockFormSteps: FormStep[] = [

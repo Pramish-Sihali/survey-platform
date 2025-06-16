@@ -5,7 +5,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { AuthService, RoleManager } from '@/lib/auth'
-import { UserWithProfile } from '@/lib/utils'
+import { UserWithProfile } from '@/lib/'
 import { cn } from '@/lib/utils'
 
 // ============================================================================
