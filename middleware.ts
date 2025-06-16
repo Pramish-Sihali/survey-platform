@@ -13,7 +13,9 @@ const PUBLIC_ROUTES = [
   '/reset-password',
   '/api/auth/login',
   '/api/auth/forgot-password',
-  '/api/auth/reset-password'
+  '/api/auth/reset-password',
+  '/'
+  
 ]
 
 // Routes that require specific roles

@@ -1,15 +1,16 @@
+// app/form/[id]/page.tsx - Updated with FormLayout
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, AlertCircle } from 'lucide-react'
+import { useParams } from 'next/navigation'
+import { AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { EmployeeInfoForm } from '@/components/forms/EmployeeInfoForm'
 import { QuestionForm } from '@/components/forms/QuestionForm'
 import { FormComplete } from '@/components/forms/FormComplete'
+import { FormLayout } from '@/components/layouts/FormLayout'
 import { 
   EmployeeInfo, 
   FormStep, 
@@ -18,13 +19,11 @@ import {
   Survey,
   ApiClient,
   convertSurveyToFormSteps,
-  convertFormResponseToApiFormat,
   isDateInRange
 } from '@/lib/utils'
 
 export default function DynamicFormPage() {
   const params = useParams()
-  // const router = useRouter()
   const surveyId = params.id as string
 
   const [currentStep, setCurrentStep] = useState(0)
@@ -50,7 +49,6 @@ export default function DynamicFormPage() {
         setLoading(true)
         setError(null)
         
-        // Validate survey ID
         if (!surveyId || typeof surveyId !== 'string') {
           setError('Invalid survey ID')
           return
@@ -59,17 +57,14 @@ export default function DynamicFormPage() {
         const response = await ApiClient.getSurvey(surveyId)
         setSurvey(response.survey)
         
-        // Convert survey to form steps
         const steps = convertSurveyToFormSteps(response.survey)
         setFormSteps(steps)
         
-        // Validate survey availability
         if (!response.survey.is_active || !response.survey.is_published) {
           setError('This survey is no longer available.')
           return
         }
         
-        // Check survey dates
         if (!isDateInRange(response.survey.start_date, response.survey.end_date)) {
           if (response.survey.end_date && new Date() > new Date(response.survey.end_date)) {
             setError('This survey has closed. The deadline has passed.')
@@ -129,10 +124,8 @@ export default function DynamicFormPage() {
     try {
       setSubmitting(true)
       
-      // Calculate completion time in minutes
       const completionTimeMinutes = Math.round((Date.now() - startTime) / (1000 * 60))
       
-      // Validate that we have responses for all required questions
       const allRequiredAnswered = formSteps.every(step => 
         step.questions.every(q => {
           if (!q.required) return true
@@ -146,11 +139,9 @@ export default function DynamicFormPage() {
         return
       }
       
-      // Quick fix: Create a different submission format for public forms
-      // Since this is a public form without user authentication
       const submissionData = {
         survey_id: surveyId,
-        employee_info: employeeInfo,  // Include the full employee info
+        employee_info: employeeInfo,
         responses: formResponses,
         completion_time_minutes: completionTimeMinutes,
         is_refill: false,
@@ -158,8 +149,6 @@ export default function DynamicFormPage() {
         submitted_at: new Date().toISOString()
       }
       
-      // Submit to a different endpoint for public forms
-      // You'll need to create this endpoint or modify the existing one
       const response = await fetch(`/api/surveys/${surveyId}/public-response`, {
         method: 'POST',
         headers: {
@@ -172,12 +161,10 @@ export default function DynamicFormPage() {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
-      // Move to completion step
       setCurrentStep(totalSteps + 1)
     } catch (err: any) {
       console.error('Error submitting survey:', err)
       
-      // Handle specific error cases
       if (err.message?.includes('unique constraint')) {
         alert('It appears you have already submitted this survey. Each person can only submit once per survey.')
       } else if (err.message?.includes('network')) {
@@ -203,44 +190,25 @@ export default function DynamicFormPage() {
       
       const response = formResponses[q.id]
       
-      // Handle undefined/empty responses
       if (response === undefined || response === null || response === '') {
         return false
       }
       
-      // Handle object responses (with main/other structure)
       if (typeof response === 'object' && response !== null && !Array.isArray(response) && 'main' in response) {
         return response.main !== '' && response.main !== undefined && response.main !== null
       }
       
-      // Handle array responses (checkboxes)
       if (Array.isArray(response)) {
         return response.length > 0
       }
       
-      // Handle simple string/number responses
       return true
     })
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
-        <nav className="border-b bg-background/80 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center space-x-4">
-              <Link href="/surveys" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-lg">i</span>
-                </div>
-                <span className="text-2xl font-bold text-foreground">
-                  <span className="text-primary">IXI</span>corp Survey
-                </span>
-              </Link>
-            </div>
-          </div>
-        </nav>
-        
+      <FormLayout>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
@@ -248,83 +216,61 @@ export default function DynamicFormPage() {
             <p className="text-sm text-muted-foreground mt-2">Please wait while we prepare your survey</p>
           </div>
         </div>
-      </div>
+      </FormLayout>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <CardTitle className="text-2xl text-destructive">Survey Unavailable</CardTitle>
-            <CardDescription className="text-base">
-              {error}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <Link href="/surveys">
-              <Button variant="outline" className="w-full">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Surveys
+      <FormLayout>
+        <div className="min-h-[60vh] flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <CardTitle className="text-2xl text-destructive">Survey Unavailable</CardTitle>
+              <CardDescription className="text-base">
+                {error}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <Button variant="outline" className="w-full" asChild>
+                <a href="/surveys">Back to Surveys</a>
               </Button>
-            </Link>
-            <Link href="/">
-              <Button variant="ghost" className="w-full">
-                Return Home
+              <Button variant="ghost" className="w-full" asChild>
+                <a href="/">Return Home</a>
               </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      </FormLayout>
     )
   }
 
   if (!survey) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <CardTitle className="text-xl">Survey Not Found</CardTitle>
-            <CardDescription>
-              The requested survey could not be found.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Link href="/surveys">
-              <Button className="w-full">
-                Browse Available Surveys
+      <FormLayout>
+        <div className="min-h-[60vh] flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <CardTitle className="text-xl">Survey Not Found</CardTitle>
+              <CardDescription>
+                The requested survey could not be found.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button className="w-full" asChild>
+                <a href="/surveys">Browse Available Surveys</a>
               </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      </FormLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
-      {/* Navigation */}
-      <nav className="border-b bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/surveys" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">i</span>
-              </div>
-              <span className="text-2xl font-bold text-foreground">
-                <span className="text-primary">IXI</span>corp Survey
-              </span>
-            </Link>
-            <div className="text-sm text-muted-foreground">
-              Step {currentStep + 1} of {totalSteps + 2}
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <FormLayout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Survey Title */}
         <div className="text-center mb-6">
@@ -337,6 +283,9 @@ export default function DynamicFormPage() {
               Survey closes on {new Date(survey.end_date).toLocaleDateString()}
             </p>
           )}
+          <div className="text-sm text-muted-foreground mt-2">
+            Step {currentStep + 1} of {totalSteps + 2}
+          </div>
         </div>
 
         {/* Progress Bar */}
@@ -378,6 +327,6 @@ export default function DynamicFormPage() {
           />
         )}
       </div>
-    </div>
+    </FormLayout>
   )
 }

@@ -1,9 +1,10 @@
+// app/user/page.tsx - Updated User Dashboard
 'use client'
 
 import { useEffect, useState } from 'react'
 import { AuthService } from '@/lib/auth'
 import { UserWithProfile } from '@/lib/utils'
-import RoleBasedNav from '@/components/navigation/RoleBasedNav'
+import { AuthenticatedLayout } from '@/components/layouts/AuthenticatedLayout'
 
 export default function CompanyUserDashboard() {
   const [user, setUser] = useState<UserWithProfile | null>(null)
@@ -39,37 +40,38 @@ export default function CompanyUserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <RoleBasedNav user={user} />
-      
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              👤 Employee Dashboard
-            </h1>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Welcome, {user.name}!</h2>
-              <p className="text-gray-600 mb-4">View and complete your assigned surveys.</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-yellow-800">My Surveys</h3>
-                  <p className="text-sm text-yellow-600">Assigned surveys</p>
-                </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-800">Profile</h3>
-                  <p className="text-sm text-blue-600">Update your information</p>
-                </div>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-green-800">History</h3>
-                  <p className="text-sm text-green-600">Completed surveys</p>
-                </div>
-              </div>
-            </div>
+    <AuthenticatedLayout user={user}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Employee Dashboard
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Welcome, {user.name}! Here are your assigned surveys and tasks.
+          </p>
+        </div>
+
+        {/* User dashboard content */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="font-semibold text-gray-800 mb-2">Pending Surveys</h3>
+            <p className="text-2xl font-bold text-yellow-600">3</p>
+            <p className="text-sm text-gray-600">Awaiting your response</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="font-semibold text-gray-800 mb-2">Completed</h3>
+            <p className="text-2xl font-bold text-green-600">8</p>
+            <p className="text-sm text-gray-600">Surveys completed</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="font-semibold text-gray-800 mb-2">Response Rate</h3>
+            <p className="text-2xl font-bold text-blue-600">100%</p>
+            <p className="text-sm text-gray-600">Keep it up!</p>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </AuthenticatedLayout>
   )
 }
