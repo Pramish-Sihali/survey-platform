@@ -39,16 +39,16 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
         { href: '/admin', label: 'Dashboard', icon: <DashboardIcon /> },
         { href: '/admin/surveys', label: 'Surveys', icon: <SurveyIcon /> },
         { href: '/admin/users', label: 'Users', icon: <UsersIcon /> },
-        { href: '/admin/assignments', label: 'Assignments', icon: <AssignmentIcon /> },
+      
         { href: '/admin/analytics', label: 'Analytics', icon: <AnalyticsIcon /> },
-        { href: '/admin/departments', label: 'Departments', icon: <DepartmentIcon /> },
+      
       ]
     }
     
     return [
       { href: '/user', label: 'Dashboard', icon: <DashboardIcon /> },
       { href: '/user/surveys', label: 'My Surveys', icon: <SurveyIcon /> },
-      { href: '/user/assignments', label: 'Assignments', icon: <AssignmentIcon /> },
+    
       { href: '/user/profile', label: 'Profile', icon: <ProfileIcon /> },
     ]
   }
