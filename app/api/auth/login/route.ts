@@ -138,9 +138,7 @@ export async function POST(request: NextRequest) {
     const body: LoginRequest = await request.json()
     const { email, password } = body
 
-    console.log('=== SIMPLE AUTH LOGIN START ===')
-    console.log('Email:', email)
-    console.log('Password received, length:', password?.length)
+
 
     if (!email || !password) {
       console.log('❌ Missing email or password')
@@ -177,20 +175,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('✅ User found:', userData.email)
-    console.log('Database password_hash:', userData.password_hash)
+
 
     // SIMPLE PASSWORD COMPARISON (No bcrypt)
     // NOTE: password_hash now contains plain text password
     const isPasswordValid = password === userData.password_hash
     
-    console.log('🔍 Password comparison:', {
-      inputPassword: `"${password}"`,
-      storedPassword: `"${userData.password_hash}"`,
-      match: isPasswordValid,
-      inputType: typeof password,
-      storedType: typeof userData.password_hash
-    })
+
 
     if (!isPasswordValid) {
       console.error('❌ Password validation failed')
@@ -200,7 +191,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('✅ Password validation successful!')
 
     // Check company status (if user has company)
     if (userData.company_id) {
@@ -255,8 +245,7 @@ export async function POST(request: NextRequest) {
       path: '/'
     })
 
-    console.log('✅ Login successful for:', email, 'Role:', userWithProfile.role)
-    console.log('=== SIMPLE AUTH LOGIN END ===')
+   
     
     return nextResponse
 
