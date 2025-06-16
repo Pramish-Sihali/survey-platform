@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { AuthService } from '@/lib/auth'
 import { ApiClient } from '@/lib/api/client'
 import { SafeUserWithProfile, CompanyWithStats } from '@/lib/types'
-import { AuthenticatedLayout } from '@/components/layouts/AuthenticatedLayout'
+
 import { 
   Building2, 
   Users, 
@@ -18,6 +18,7 @@ import {
   CheckCircle,
   XCircle 
 } from 'lucide-react'
+import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout'
 
 export default function CompaniesPage() {
   const router = useRouter()
@@ -94,7 +95,7 @@ export default function CompaniesPage() {
   }
 
   return (
-    <AuthenticatedLayout user={user}>
+    <SuperAdminLayout user={user}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -240,6 +241,6 @@ export default function CompaniesPage() {
           </div>
         )}
       </div>
-    </AuthenticatedLayout>
+    </SuperAdminLayout>
   )
 }

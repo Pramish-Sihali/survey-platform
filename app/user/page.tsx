@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import { AuthService } from '@/lib/auth'
-import { UserWithProfile } from '@/lib/utils'
+import { UserWithProfile } from '@/lib'
 import { AuthenticatedLayout } from '@/components/layouts/AuthenticatedLayout'
 
 export default function CompanyUserDashboard() {

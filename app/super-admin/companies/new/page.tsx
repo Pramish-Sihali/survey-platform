@@ -1,24 +1,48 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { AuthService } from '@/lib/auth'
 import { ApiClient } from '@/lib/api/client'
-import { Company } from '@/lib/types'
-import { AuthenticatedLayout } from '@/components/layouts/AuthenticatedLayout'
+import { SafeUserWithProfile } from '@/lib/types'
+import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout'
 import { ArrowLeft, Building2, Save, AlertCircle } from 'lucide-react'
 
 export default function NewCompanyPage() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const [user, setUser] = useState<SafeUserWithProfile | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     domain: '',
-    subscription_plan: 'basic',
+    subscription_plan: 'basic' as 'basic' | 'professional' | 'premium' | 'enterprise',
     max_users: 50,
     max_surveys: 10,
     is_active: true
   })
+
+  useEffect(() => {
+    loadUser()
+  }, [])
+
+  const loadUser = async () => {
+    try {
+      const currentUser = await AuthService.getCurrentUser()
+      setUser(currentUser)
+
+      if (!currentUser || currentUser.role !== 'super_admin') {
+        router.push('/dashboard')
+        return
+      }
+    } catch (error) {
+      console.error('Error loading user:', error)
+      setError('Failed to load user data')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -62,12 +86,12 @@ export default function NewCompanyPage() {
       return
     }
 
-    setIsLoading(true)
+    setIsSaving(true)
 
     try {
       const companyData = {
         name: formData.name.trim(),
-        domain: formData.domain.trim() || null,
+        domain: formData.domain.trim() || undefined,
         subscription_plan: formData.subscription_plan,
         max_users: formData.max_users,
         max_surveys: formData.max_surveys,
@@ -80,17 +104,39 @@ export default function NewCompanyPage() {
       console.error('Error creating company:', error)
       setError(error instanceof Error ? error.message : 'Failed to create company')
     } finally {
-      setIsLoading(false)
+      setIsSaving(false)
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-600">{error || 'Access denied'}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <SuperAdminLayout user={user}>
+      <div className="space-y-6">
         {/* Header */}
-        <div className="mb-8">
+        <div>
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/super-admin/companies')}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -175,6 +221,7 @@ export default function NewCompanyPage() {
                   >
                     <option value="basic">Basic</option>
                     <option value="professional">Professional</option>
+                    <option value="premium">Premium</option>
                     <option value="enterprise">Enterprise</option>
                   </select>
                 </div>
@@ -211,6 +258,33 @@ export default function NewCompanyPage() {
                   />
                 </div>
               </div>
+
+              {/* Plan descriptions */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-2">Plan Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                  <div className="bg-white p-3 rounded border">
+                    <div className="font-medium text-gray-900">Basic</div>
+                    <div className="text-gray-600">50 users, 10 surveys</div>
+                    <div className="text-green-600 font-medium">$29/month</div>
+                  </div>
+                  <div className="bg-white p-3 rounded border">
+                    <div className="font-medium text-gray-900">Professional</div>
+                    <div className="text-gray-600">100 users, 25 surveys</div>
+                    <div className="text-green-600 font-medium">$99/month</div>
+                  </div>
+                  <div className="bg-white p-3 rounded border">
+                    <div className="font-medium text-gray-900">Premium</div>
+                    <div className="text-gray-600">200 users, 50 surveys</div>
+                    <div className="text-green-600 font-medium">$199/month</div>
+                  </div>
+                  <div className="bg-white p-3 rounded border">
+                    <div className="font-medium text-gray-900">Enterprise</div>
+                    <div className="text-gray-600">500 users, 100 surveys</div>
+                    <div className="text-green-600 font-medium">$499/month</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Status */}
@@ -227,7 +301,7 @@ export default function NewCompanyPage() {
                   className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
                 />
                 <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700">
-                  Active (company can use the platform)
+                  Active (company can use the platform immediately)
                 </label>
               </div>
             </div>
@@ -236,20 +310,20 @@ export default function NewCompanyPage() {
             <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSaving}
                 className="bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-300 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
-                {isLoading ? (
+                {isSaving ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <Save className="h-4 w-4" />
                 )}
-                {isLoading ? 'Creating...' : 'Create Company'}
+                {isSaving ? 'Creating...' : 'Create Company'}
               </button>
               
               <button
                 type="button"
-                onClick={() => router.back()}
+                onClick={() => router.push('/super-admin/companies')}
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
@@ -258,6 +332,6 @@ export default function NewCompanyPage() {
           </form>
         </div>
       </div>
-    </div>
+    </SuperAdminLayout>
   )
 }
