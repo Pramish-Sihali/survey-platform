@@ -7,9 +7,10 @@ import { Settings, BarChart3, ClipboardList, Plus, AlertCircle } from 'lucide-re
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
-import { ApiClient, Survey, formatDate, UserWithProfile } from '@/lib/utils'
+
 import { AuthenticatedLayout } from '@/components/layouts/AuthenticatedLayout'
 import { AuthService } from '@/lib/auth'
+import { Survey, UserWithProfile, ApiClient, formatDate } from '@/lib'
 
 interface AdminStats {
   totalSurveys: number

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AuthenticatedLayout } from '@/components/layouts/AuthenticatedLayout'
 import { AuthService } from '@/lib/auth'
-import { Survey, ApiClient ,  UserWithProfile  } from '@/lib/utils'
+import { Survey, ApiClient ,  UserWithProfile  } from '@/lib'
 
 interface OverviewStats {
   totalSurveys: number

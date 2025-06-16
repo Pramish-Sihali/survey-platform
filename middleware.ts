@@ -1,6 +1,9 @@
-// middleware.ts - Route Protection Middleware
+// middleware.ts - Route Protection Middleware (UPDATED)
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getDefaultDashboardRoute, canAccessRoute } from '@/lib/auths/helpers'
+import { safeJsonParse } from '@/lib/utils'
+import type { UserRole } from '@/lib/types'
 
 // ============================================================================
 // MIDDLEWARE CONFIGURATION
@@ -15,7 +18,6 @@ const PUBLIC_ROUTES = [
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
   '/'
-  
 ]
 
 // Routes that require specific roles
@@ -33,8 +35,7 @@ const PROTECTED_API_ROUTES = [
   '/api/responses',
   '/api/analytics',
   '/api/comments',
-  '/api/survey-assignments',
-  '/api/departments'
+  '/api/survey-assignments'
 ]
 
 // ============================================================================
@@ -49,10 +50,10 @@ function isProtectedApiRoute(pathname: string): boolean {
   return PROTECTED_API_ROUTES.some(route => pathname.startsWith(route))
 }
 
-function getRequiredRoles(pathname: string): string[] | null {
+function getRequiredRoles(pathname: string): UserRole[] | null {
   for (const [route, roles] of Object.entries(ROLE_ROUTES)) {
     if (pathname.startsWith(route)) {
-      return roles
+      return roles as UserRole[]
     }
   }
   return null
@@ -61,6 +62,8 @@ function getRequiredRoles(pathname: string): string[] | null {
 function parseJwtPayload(token: string): any {
   try {
     const base64Url = token.split('.')[1]
+    if (!base64Url) return null
+    
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
     const jsonPayload = decodeURIComponent(
       atob(base64)
@@ -68,7 +71,7 @@ function parseJwtPayload(token: string): any {
         .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     )
-    return JSON.parse(jsonPayload)
+    return safeJsonParse(jsonPayload, null)
   } catch (error) {
     console.error('Error parsing JWT:', error)
     return null
@@ -96,17 +99,33 @@ function getUserFromToken(token: string): any {
   }
 }
 
-function getDefaultRouteForRole(role: string): string {
-  switch (role) {
-    case 'super_admin':
-      return '/super-admin'
-    case 'company_admin':
-      return '/admin'
-    case 'company_user':
-      return '/user'
-    default:
-      return '/login'
+// ============================================================================
+// RESPONSE HELPERS
+// ============================================================================
+
+function createUnauthorizedResponse(pathname: string, message = 'Authentication required'): NextResponse {
+  if (pathname.startsWith('/api')) {
+    return NextResponse.json({ error: message }, { status: 401 })
   }
+  
+  const loginUrl = new URL('/login', pathname)
+  loginUrl.searchParams.set('from', pathname)
+  return NextResponse.redirect(loginUrl)
+}
+
+function createForbiddenResponse(pathname: string, userRole: UserRole): NextResponse {
+  if (pathname.startsWith('/api')) {
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+  }
+  
+  // Redirect to appropriate dashboard
+  const defaultRoute = getDefaultDashboardRoute({ role: userRole } as any)
+  return NextResponse.redirect(new URL(defaultRoute, pathname))
+}
+
+function clearAuthCookie(response: NextResponse): NextResponse {
+  response.cookies.delete('survey_auth_token')
+  return response
 }
 
 // ============================================================================
@@ -116,20 +135,20 @@ function getDefaultRouteForRole(role: string): string {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
+  // Skip middleware for static assets and Next.js internals
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon') ||
+    pathname.includes('.') && !pathname.startsWith('/api')
+  ) {
+    return NextResponse.next()
+  }
+
   // Get token from cookie or Authorization header
   const tokenFromCookie = request.cookies.get('survey_auth_token')?.value
   const authHeader = request.headers.get('authorization')
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null
   const token = tokenFromCookie || tokenFromHeader
-
-  // For static assets and Next.js internals, skip middleware
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon') ||
-    pathname.includes('.')
-  ) {
-    return NextResponse.next()
-  }
 
   // Handle public routes
   if (isPublicRoute(pathname)) {
@@ -137,7 +156,7 @@ export function middleware(request: NextRequest) {
     if (pathname === '/login' && token && !isTokenExpired(token)) {
       const user = getUserFromToken(token)
       if (user?.role) {
-        const defaultRoute = getDefaultRouteForRole(user.role)
+        const defaultRoute = getDefaultDashboardRoute(user)
         return NextResponse.redirect(new URL(defaultRoute, request.url))
       }
     }
@@ -146,78 +165,55 @@ export function middleware(request: NextRequest) {
 
   // Check authentication for protected routes
   if (!token) {
-    // For API routes, return 401
-    if (pathname.startsWith('/api')) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
-    
-    // For web routes, redirect to login
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('from', pathname)
-    return NextResponse.redirect(loginUrl)
+    return createUnauthorizedResponse(pathname)
   }
 
-  // Validate token
+  // Validate token expiration
   if (isTokenExpired(token)) {
-    // Clear expired token
-    const response = pathname.startsWith('/api')
-      ? NextResponse.json({ error: 'Token expired' }, { status: 401 })
-      : NextResponse.redirect(new URL('/login', request.url))
-    
-    response.cookies.delete('survey_auth_token')
-    return response
+    const response = createUnauthorizedResponse(pathname, 'Token expired')
+    return clearAuthCookie(response)
   }
 
-  // Get user from token
+  // Get and validate user from token
   const user = getUserFromToken(token)
-  if (!user) {
-    const response = pathname.startsWith('/api')
-      ? NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-      : NextResponse.redirect(new URL('/login', request.url))
-    
-    response.cookies.delete('survey_auth_token')
-    return response
+  if (!user || !user.id || !user.role) {
+    const response = createUnauthorizedResponse(pathname, 'Invalid token')
+    return clearAuthCookie(response)
   }
 
   // Check role-based access for web routes
   const requiredRoles = getRequiredRoles(pathname)
   if (requiredRoles && !requiredRoles.includes(user.role)) {
-    if (pathname.startsWith('/api')) {
-      return NextResponse.json(
-        { error: 'Insufficient permissions' },
-        { status: 403 }
-      )
-    }
-    
-    // Redirect to appropriate dashboard
-    const defaultRoute = getDefaultRouteForRole(user.role)
-    return NextResponse.redirect(new URL(defaultRoute, request.url))
+    return createForbiddenResponse(pathname, user.role)
   }
 
   // Handle root route redirect
   if (pathname === '/') {
-    const defaultRoute = getDefaultRouteForRole(user.role)
+    const defaultRoute = getDefaultDashboardRoute(user)
     return NextResponse.redirect(new URL(defaultRoute, request.url))
   }
 
-  // Additional security checks for API routes
-  if (pathname.startsWith('/api')) {
-    // Company isolation for non-super-admin users
-    if (user.role !== 'super_admin' && isProtectedApiRoute(pathname)) {
-      // Add user context to headers for API routes to use
-      const requestHeaders = new Headers(request.headers)
-      requestHeaders.set('x-user-id', user.id)
-      requestHeaders.set('x-user-role', user.role)
-      requestHeaders.set('x-company-id', user.company_id || '')
-      
-      return NextResponse.next({
-        request: {
-          headers: requestHeaders,
-        },
-      })
+  // For API routes, add user context headers
+  if (pathname.startsWith('/api') && isProtectedApiRoute(pathname)) {
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-user-id', user.id)
+    requestHeaders.set('x-user-role', user.role)
+    requestHeaders.set('x-company-id', user.company_id || '')
+    requestHeaders.set('x-user-name', user.name || '')
+    requestHeaders.set('x-user-email', user.email || '')
+    
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
+  }
+
+  // Additional validation for protected web routes
+  if (!pathname.startsWith('/api')) {
+    // Check if user can access this specific route
+    if (!canAccessRoute(user, pathname)) {
+      return createForbiddenResponse(pathname, user.role)
     }
   }
 

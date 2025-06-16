@@ -1,480 +1,76 @@
-// lib/utils.ts - Multi-Tenant B2B Survey Platform (UPDATED WITH SANITIZED TYPES)
+// lib/utils.ts - Core Utilities (Simplified)
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { Survey, FormStep, FormQuestion, FormResponses, FormResponseValue } from '@/lib/types'
+
+// ============================================================================
+// CORE TAILWIND UTILITY
+// ============================================================================
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 // ============================================================================
-// MULTI-TENANT DATABASE TYPES
-// ============================================================================
-
-// Company Types
-export interface Company {
-  id: string
-  name: string
-  domain: string | null
-  subscription_plan: string
-  is_active: boolean
-  max_users: number
-  max_surveys: number
-  created_at: string
-  updated_at: string
-}
-
-export interface CompanyWithStats extends Company {
-  user_count?: number
-  survey_count?: number
-  active_assignments?: number
-  admin_count?: number
-}
-
-// User Types
-export type UserRole = 'super_admin' | 'company_admin' | 'company_user'
-
-export interface User {
-  id: string
-  company_id: string | null
-  email: string
-  password_hash: string
-  name: string
-  role: UserRole
-  is_active: boolean
-  last_login: string | null
-  created_at: string
-  updated_at: string
-  created_by: string | null
-}
-
-export interface UserProfile {
-  id: string
-  user_id: string
-  designation: string | null
-  department_id: string | null
-  supervisor_name: string | null
-  reports_to: string | null
-  phone: string | null
-  avatar_url: string | null
-  bio: string | null
-  hire_date: string | null
-  is_profile_complete: boolean
-  created_at: string
-  updated_at: string
-}
-
-export interface UserWithProfile extends User {
-  company_name?: string | null
-  designation?: string | null
-  department_id?: string | null
-  supervisor_name?: string | null
-  reports_to?: string | null
-  phone?: string | null
-  avatar_url?: string | null
-  bio?: string | null
-  hire_date?: string | null
-  is_profile_complete?: boolean
-  department_name?: string | null
-}
-
-// ============================================================================
-// SANITIZED USER TYPES FOR API RESPONSES
-// ============================================================================
-
-// Sanitized user type without sensitive information (password_hash removed)
-export interface SafeUserWithProfile extends Omit<UserWithProfile, 'password_hash'> {
-  // All properties from UserWithProfile except password_hash
-}
-
-// Safe User type without password_hash
-export interface SafeUser extends Omit<User, 'password_hash'> {
-  // All properties from User except password_hash
-}
-
-// Department Types (updated for multi-tenancy)
-export interface Department {
-  id: string
-  company_id: string
-  name: string
-  description: string | null
-  is_active: boolean
-  created_at: string
-  updated_at: string
-}
-
-export interface DepartmentWithCompany extends Department {
-  company?: Company
-  user_count?: number
-}
-
-// Survey Types (updated for multi-tenancy)
-export interface Survey {
-  id: string
-  company_id: string
-  created_by: string | null
-  title: string
-  description: string | null
-  is_active: boolean
-  is_published: boolean
-  allows_refill: boolean
-  start_date: string | null
-  end_date: string | null
-  created_at: string
-  updated_at: string
-  survey_sections?: SurveySection[]
-}
-
-export interface SurveySection {
-  id: string
-  survey_id: string
-  title: string
-  description: string | null
-  order_index: number
-  created_at: string
-  updated_at: string
-  questions?: Question[]
-}
-
-export interface Question {
-  id: string
-  section_id: string
-  question_text: string
-  question_type: 'text' | 'yes_no' | 'radio' | 'checkbox' | 'rating' | 'select'
-  is_required: boolean
-  has_other_option: boolean
-  order_index: number
-  metadata?: any
-  created_at: string
-  updated_at: string
-  question_options?: QuestionOption[]
-}
-
-export interface QuestionOption {
-  id: string
-  question_id: string
-  option_text: string
-  order_index: number
-  created_at: string
-}
-
-// Survey Assignment Types
-export type AssignmentStatus = 'pending' | 'in_progress' | 'completed' | 'refill_requested'
-
-export interface SurveyAssignment {
-  id: string
-  survey_id: string
-  user_id: string
-  assigned_by: string
-  status: AssignmentStatus
-  assigned_at: string
-  completed_at: string | null
-  due_date: string | null
-  refill_count: number
-  notes: string | null
-}
-
-// FIXED: Added nested objects that Supabase returns
-export interface SurveyAssignmentWithDetails extends SurveyAssignment {
-  // Nested Supabase relationship objects
-  surveys?: {
-    id: string
-    title: string
-    description?: string
-    company_id: string
-    is_active: boolean
-    is_published: boolean
-    allows_refill?: boolean
-    start_date?: string
-    end_date?: string
-  }
-  users?: {
-    id: string
-    name: string
-    email: string
-    company_id: string
-  }
-  assigned_by_user?: {
-    id: string
-    name: string
-    email: string
-  }
-  
-  // Flattened convenience properties
-  survey_title: string
-  survey_description: string | null
-  user_name: string
-  user_email: string
-  assigned_by_name: string
-  company_name: string
-}
-
-// Survey Response Types (updated)
-export interface SurveyResponse {
-  id: string
-  survey_id: string
-  user_id: string | null
-  assignment_id: string | null
-  response_attempt: number
-  is_refill: boolean
-  submitted_at: string
-  completion_time_minutes: number | null
-}
-
-export interface QuestionResponse {
-  id: string
-  survey_response_id: string
-  question_id: string
-  response_type: 'text' | 'number' | 'array' | 'object'
-  text_response: string | null
-  number_response: number | null
-  array_response: string[] | null
-  object_response: any | null
-  created_at: string
-}
-
-// Comment Types
-export type CommentType = 'general' | 'clarification' | 'feedback' | 'refill_request'
-
-export interface SurveyComment {
-  id: string
-  survey_id: string
-  assignment_id: string | null
-  user_id: string
-  recipient_id: string | null
-  comment_text: string
-  comment_type: CommentType
-  is_read: boolean
-  parent_comment_id: string | null
-  created_at: string
-  updated_at: string
-}
-
-export interface CommentWithUser extends SurveyComment {
-  user: User
-  recipient?: User
-  replies?: CommentWithUser[]
-}
-
-// ============================================================================
-// LEGACY FORM TYPES (for compatibility)
-// ============================================================================
-
-export interface FormStep {
-  id: string
-  title: string
-  questions: FormQuestion[]
-}
-
-export interface FormQuestion {
-  id: string
-  type: 'text' | 'select' | 'radio' | 'checkbox' | 'rating' | 'yes_no'
-  question: string
-  required: boolean
-  options?: string[]
-  hasOther?: boolean
-  section?: string
-}
-
-export interface EmployeeInfo {
-  name: string
-  designation: string
-  department: string
-  supervisor: string
-  reportsTo: string
-}
-
-export type FormResponseValue = 
-  | string 
-  | number 
-  | string[] 
-  | { main: string | number; other?: string }
-
-export type FormResponses = Record<string, FormResponseValue>
-
-// ============================================================================
-// UPDATED API RESPONSE TYPES (WITH SANITIZED USERS)
-// ============================================================================
-
-export interface ApiResponse<T> {
-  data?: T
-  error?: string
-  message?: string
-}
-
-// User Management API Responses (UPDATED)
-export interface UsersResponse {
-  users: SafeUserWithProfile[]  // CHANGED: Now uses sanitized type
-  total?: number
-}
-
-export interface UserDetailResponse {
-  user: SafeUserWithProfile  // CHANGED: Now uses sanitized type
-}
-
-// Company Management API Responses
-export interface CompaniesResponse {
-  companies: CompanyWithStats[]
-  total?: number
-}
-
-export interface CompanyDetailResponse {
-  company: CompanyWithStats
-}
-
-// Survey API Responses
-export interface SurveyListResponse {
-  surveys: Survey[]
-  total?: number
-}
-
-export interface SurveyDetailResponse {
-  survey: Survey
-}
-
-// Assignment API Responses
-export interface AssignmentsResponse {
-  assignments: SurveyAssignmentWithDetails[]
-  total?: number
-}
-
-// Comments API Responses
-export interface CommentsResponse {
-  comments: CommentWithUser[]
-  total?: number
-}
-
-// Analytics Types
-export interface QuestionAnalytics {
-  id: string
-  question: string
-  type: string
-  responses: number
-  avgRating?: number
-  distribution?: number[]
-  yesCount?: number
-  noCount?: number
-}
-
-export interface AnalyticsResponse {
-  overview: {
-    totalResponses: number
-    responseRate: number
-    avgCompletionTime: number
-    lastUpdated: string
-  }
-  departments: Array<{
-    name: string
-    responses: number
-    total: number
-    rate: number
-  }>
-  questionAnalytics: QuestionAnalytics[]
-}
-
-// ============================================================================
-// USER SANITIZATION UTILITY FUNCTIONS
-// ============================================================================
-
-/**
- * Remove sensitive information (password_hash) from a single user object
- */
-export function sanitizeUser(user: UserWithProfile): SafeUserWithProfile {
-  const { password_hash, ...sanitizedUser } = user
-  return sanitizedUser
-}
-
-/**
- * Remove sensitive information from an array of user objects
- */
-export function sanitizeUsers(users: UserWithProfile[]): SafeUserWithProfile[] {
-  return users.map(user => sanitizeUser(user))
-}
-
-/**
- * Remove sensitive information from a basic User object
- */
-export function sanitizeBasicUser(user: User): SafeUser {
-  const { password_hash, ...sanitizedUser } = user
-  return sanitizedUser
-}
-
-/**
- * Remove sensitive information from an array of basic User objects
- */
-export function sanitizeBasicUsers(users: User[]): SafeUser[] {
-  return users.map(user => sanitizeBasicUser(user))
-}
-
-// ============================================================================
-// TYPE GUARDS AND VALIDATION
-// ============================================================================
-
-/**
- * Check if a user object has been sanitized (no password_hash)
- */
-export function isSanitizedUser(user: any): user is SafeUserWithProfile {
-  return user && typeof user === 'object' && !('password_hash' in user)
-}
-
-/**
- * Check if a user object contains sensitive data
- */
-export function isUnsanitizedUser(user: any): user is UserWithProfile {
-  return user && typeof user === 'object' && 'password_hash' in user
-}
-
-/**
- * Check if a basic user object has been sanitized
- */
-export function isSanitizedBasicUser(user: any): user is SafeUser {
-  return user && typeof user === 'object' && !('password_hash' in user)
-}
-
-// ============================================================================
-// ROLE-BASED HELPER FUNCTIONS
-// ============================================================================
-
-// Role-based helper functions
-export function isSuperAdmin(user: User | UserWithProfile | SafeUserWithProfile): boolean {
-  return user.role === 'super_admin'
-}
-
-export function isCompanyAdmin(user: User | UserWithProfile | SafeUserWithProfile): boolean {
-  return user.role === 'company_admin'
-}
-
-export function isCompanyUser(user: User | UserWithProfile | SafeUserWithProfile): boolean {
-  return user.role === 'company_user'
-}
-
-export function hasAdminAccess(user: User | UserWithProfile | SafeUserWithProfile): boolean {
-  return user.role === 'super_admin' || user.role === 'company_admin'
-}
-
-export function canManageCompany(user: User | UserWithProfile | SafeUserWithProfile, companyId: string): boolean {
-  if (user.role === 'super_admin') return true
-  if (user.role === 'company_admin' && user.company_id === companyId) return true
-  return false
-}
-
-export function canAccessSurvey(user: User | UserWithProfile | SafeUserWithProfile, survey: Survey): boolean {
-  if (user.role === 'super_admin') return true
-  return user.company_id === survey.company_id
-}
-
-// ============================================================================
 // DATE UTILITIES
 // ============================================================================
 
-// Date utilities
+/**
+ * Format date string to locale date
+ */
 export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString()
+  try {
+    return new Date(dateString).toLocaleDateString()
+  } catch {
+    return dateString
+  }
 }
 
+/**
+ * Format date string to locale date and time
+ */
 export function formatDateTime(dateString: string): string {
-  return new Date(dateString).toLocaleString()
+  try {
+    return new Date(dateString).toLocaleString()
+  } catch {
+    return dateString
+  }
 }
 
+/**
+ * Format date for input fields (YYYY-MM-DD)
+ */
+export function formatDateForInput(dateString: string): string {
+  try {
+    return new Date(dateString).toISOString().split('T')[0]
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * Get relative time string (e.g., "2 hours ago")
+ */
+export function getRelativeTime(dateString: string): string {
+  try {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+    if (diffInSeconds < 60) return 'just now'
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`
+    if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} months ago`
+    return `${Math.floor(diffInSeconds / 31536000)} years ago`
+  } catch {
+    return dateString
+  }
+}
+
+/**
+ * Check if a date is within a specified range
+ */
 export function isDateInRange(startDate: string | null, endDate: string | null): boolean {
   if (!startDate && !endDate) return true
   
@@ -488,11 +84,227 @@ export function isDateInRange(startDate: string | null, endDate: string | null):
   return true
 }
 
+/**
+ * Check if a date is in the past
+ */
+export function isDatePast(dateString: string): boolean {
+  try {
+    return new Date(dateString) < new Date()
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Check if a date is in the future
+ */
+export function isDateFuture(dateString: string): boolean {
+  try {
+    return new Date(dateString) > new Date()
+  } catch {
+    return false
+  }
+}
+
 // ============================================================================
-// FORM CONVERSION UTILITIES
+// STRING UTILITIES
 // ============================================================================
 
-// Form conversion utilities (for backward compatibility)
+/**
+ * Capitalize first letter of a string
+ */
+export function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+}
+
+/**
+ * Convert string to title case
+ */
+export function toTitleCase(str: string): string {
+  return str.replace(/\w\S*/g, (txt) => 
+    txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+  )
+}
+
+/**
+ * Truncate string with ellipsis
+ */
+export function truncate(str: string, length: number): string {
+  if (str.length <= length) return str
+  return str.slice(0, length) + '...'
+}
+
+/**
+ * Generate initials from name
+ */
+export function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map(part => part.charAt(0).toUpperCase())
+    .join('')
+    .slice(0, 2)
+}
+
+/**
+ * Slugify string for URLs
+ */
+export function slugify(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+// ============================================================================
+// NUMBER UTILITIES
+// ============================================================================
+
+/**
+ * Format number as percentage
+ */
+export function formatPercentage(value: number, decimals: number = 1): string {
+  return `${value.toFixed(decimals)}%`
+}
+
+/**
+ * Format large numbers with K, M, B suffixes
+ */
+export function formatNumber(num: number): string {
+  if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B'
+  if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M'
+  if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K'
+  return num.toString()
+}
+
+/**
+ * Clamp number between min and max
+ */
+export function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
+}
+
+// ============================================================================
+// ARRAY UTILITIES
+// ============================================================================
+
+/**
+ * Remove duplicates from array
+ */
+export function unique<T>(array: T[]): T[] {
+  return [...new Set(array)]
+}
+
+/**
+ * Group array by key
+ */
+export function groupBy<T>(array: T[], key: keyof T): Record<string, T[]> {
+  return array.reduce((groups, item) => {
+    const group = String(item[key])
+    groups[group] = groups[group] || []
+    groups[group].push(item)
+    return groups
+  }, {} as Record<string, T[]>)
+}
+
+/**
+ * Sort array by key
+ */
+export function sortBy<T>(array: T[], key: keyof T, direction: 'asc' | 'desc' = 'asc'): T[] {
+  return [...array].sort((a, b) => {
+    const aVal = a[key]
+    const bVal = b[key]
+    
+    if (aVal < bVal) return direction === 'asc' ? -1 : 1
+    if (aVal > bVal) return direction === 'asc' ? 1 : -1
+    return 0
+  })
+}
+
+// ============================================================================
+// OBJECT UTILITIES
+// ============================================================================
+
+/**
+ * Deep clone an object
+ */
+export function deepClone<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj
+  if (typeof obj !== 'object') return obj
+  if (obj instanceof Date) return new Date(obj.getTime()) as T
+  if (Array.isArray(obj)) return obj.map(item => deepClone(item)) as T
+  
+  const cloned = {} as T
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      cloned[key] = deepClone(obj[key])
+    }
+  }
+  return cloned
+}
+/**
+ * Pick specific keys from object
+ */
+export function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Pick<T, K> {
+  const result = {} as Pick<T, K>
+  keys.forEach(key => {
+    if (key in obj) {
+      result[key] = obj[key]
+    }
+  })
+  return result
+}
+
+/**
+ * Omit specific keys from object
+ */
+export function omit<T extends object, K extends keyof T>(obj: T, keys: K[]): Omit<T, K> {
+  const result = { ...obj }
+  keys.forEach(key => {
+    delete result[key]
+  })
+  return result
+}
+
+// ============================================================================
+// VALIDATION UTILITIES
+// ============================================================================
+
+/**
+ * Validate email format
+ */
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+/**
+ * Validate URL format
+ */
+export function isValidUrl(url: string): boolean {
+  try {
+    new URL(url)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Validate phone number (basic)
+ */
+export function isValidPhone(phone: string): boolean {
+  const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/
+  return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''))
+}
+
+// ============================================================================
+// FORM CONVERSION UTILITIES (for backward compatibility)
+// ============================================================================
+
+/**
+ * Convert Survey to legacy FormSteps format
+ */
 export function convertSurveyToFormSteps(survey: Survey): FormStep[] {
   if (!survey.survey_sections) return []
   
@@ -511,15 +323,19 @@ export function convertSurveyToFormSteps(survey: Survey): FormStep[] {
           options: question.question_options
             ?.sort((a, b) => a.order_index - b.order_index)
             .map(opt => opt.option_text),
-          hasOther: question.has_other_option
+          hasOther: question.has_other_option,
+          section: section.title
         }))
     }))
 }
 
+/**
+ * Convert form responses to API format
+ */
 export function convertFormResponseToApiFormat(
   surveyId: string,
   userId: string,
-  assignmentId: string,
+  assignmentId: string | null,
   responses: FormResponses,
   completionTimeMinutes?: number,
   isRefill: boolean = false,
@@ -536,375 +352,171 @@ export function convertFormResponseToApiFormat(
   }
 }
 
+/**
+ * Validate form response value
+ */
+export function validateFormResponse(value: FormResponseValue, required: boolean): boolean {
+  if (!required && (value === null || value === undefined || value === '')) {
+    return true
+  }
+  
+  if (required && (value === null || value === undefined || value === '')) {
+    return false
+  }
+  
+  if (Array.isArray(value)) {
+    return value.length > 0
+  }
+  
+  if (typeof value === 'object' && value !== null) {
+    return 'main' in value && value.main !== null && value.main !== undefined && value.main !== ''
+  }
+  
+  return true
+}
+
 // ============================================================================
-// MULTI-TENANT API CLIENT
+// ERROR HANDLING UTILITIES
 // ============================================================================
 
-export class ApiClient {
-  private static baseUrl = '/api'
-  private static authToken: string | null = null
-
-  // Set authentication token
-  static setAuthToken(token: string) {
-    this.authToken = token
+/**
+ * Extract error message from various error types
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
   }
-
-  static clearAuthToken() {
-    this.authToken = null
+  
+  if (typeof error === 'string') {
+    return error
   }
+  
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String(error.message)
+  }
+  
+  return 'An unknown error occurred'
+}
 
-  // Base request method with auth
-  private static async request<T>(
-    endpoint: string, 
-    options: RequestInit = {}
-  ): Promise<T> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string>),
+/**
+ * Safely parse JSON with fallback
+ */
+export function safeJsonParse<T>(jsonString: string, fallback: T): T {
+  try {
+    return JSON.parse(jsonString)
+  } catch {
+    return fallback
+  }
+}
+
+// ============================================================================
+// LOCAL STORAGE UTILITIES
+// ============================================================================
+
+/**
+ * Safely get item from localStorage
+ */
+export function getLocalStorageItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Safely set item in localStorage
+ */
+export function setLocalStorageItem(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Safely remove item from localStorage
+ */
+export function removeLocalStorageItem(key: string): boolean {
+  try {
+    localStorage.removeItem(key)
+    return true
+  } catch {
+    return false
+  }
+}
+
+// ============================================================================
+// DEBOUNCE UTILITY
+// ============================================================================
+
+/**
+ * Debounce function calls
+ */
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null
+  
+  return (...args: Parameters<T>) => {
+    if (timeout) {
+      clearTimeout(timeout)
     }
+    
+    timeout = setTimeout(() => {
+      func(...args)
+    }, wait)
+  }
+}
 
-    if (this.authToken) {
-      headers['Authorization'] = `Bearer ${this.authToken}`
+// ============================================================================
+// FOCUS UTILITIES
+// ============================================================================
+
+/**
+ * Focus first input in container
+ */
+export function focusFirstInput(container: HTMLElement): void {
+  const firstInput = container.querySelector('input, textarea, select') as HTMLElement
+  if (firstInput) {
+    firstInput.focus()
+  }
+}
+
+/**
+ * Trap focus within container
+ */
+export function trapFocus(container: HTMLElement): () => void {
+  const focusableElements = container.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  ) as NodeListOf<HTMLElement>
+  
+  const firstElement = focusableElements[0]
+  const lastElement = focusableElements[focusableElements.length - 1]
+  
+  function handleTabKey(e: KeyboardEvent) {
+    if (e.key !== 'Tab') return
+    
+    if (e.shiftKey) {
+      if (document.activeElement === firstElement) {
+        lastElement.focus()
+        e.preventDefault()
+      }
+    } else {
+      if (document.activeElement === lastElement) {
+        firstElement.focus()
+        e.preventDefault()
+      }
     }
-
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers,
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`API Error: ${response.status} - ${errorText}`)
-    }
-
-    return response.json()
   }
-
-  // Convenience methods
-  static async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint)
-  }
-
-  static async post<T>(endpoint: string, data: any): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
-  }
-
-  static async put<T>(endpoint: string, data: any): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    })
-  }
-
-  static async patch<T>(endpoint: string, data: any): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    })
-  }
-
-  static async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'DELETE',
-    })
-  }
-
-  // ============================================================================
-  // AUTHENTICATION METHODS
-  // ============================================================================
-
-  static async login(email: string, password: string): Promise<{ user: SafeUserWithProfile; token: string }> {
-    return this.post('/auth/login', { email, password })
-  }
-
-  static async logout(): Promise<ApiResponse<any>> {
-    const result = await this.post<ApiResponse<any>>('/auth/logout', {})
-    this.clearAuthToken()
-    return result
-  }
-
-  static async getCurrentUser(): Promise<UserDetailResponse> {
-    return this.get('/auth/logout') // This should be '/auth/me' but using logout endpoint for now
-  }
-
-  // ============================================================================
-  // COMPANY MANAGEMENT (Super Admin)
-  // ============================================================================
-
-  static async getCompanies(): Promise<CompaniesResponse> {
-    return this.get('/companies')
-  }
-
-  static async getCompany(id: string): Promise<CompanyDetailResponse> {
-    return this.get(`/companies/${id}`)
-  }
-
-  static async createCompany(data: Partial<Company>): Promise<{ company: Company }> {
-    return this.post('/companies', data)
-  }
-
-  static async updateCompany(id: string, data: Partial<Company>): Promise<{ company: Company }> {
-    return this.put(`/companies/${id}`, data)
-  }
-
-  static async deleteCompany(id: string): Promise<ApiResponse<any>> {
-    return this.delete(`/companies/${id}`)
-  }
-
-  // ============================================================================
-  // USER MANAGEMENT
-  // ============================================================================
-
-  static async getUsers(companyId?: string): Promise<UsersResponse> {
-    const endpoint = companyId ? `/users?company_id=${companyId}` : '/users'
-    return this.get(endpoint)
-  }
-
-  static async getUser(id: string): Promise<UserDetailResponse> {
-    return this.get(`/users/${id}`)
-  }
-
-  static async createUser(data: Partial<User> & { profile?: Partial<UserProfile> }): Promise<{ user: SafeUserWithProfile }> {
-    return this.post('/users', data)
-  }
-
-  static async updateUser(id: string, data: Partial<User>): Promise<{ user: SafeUserWithProfile }> {
-    return this.put(`/users/${id}`, data)
-  }
-
-  static async updateUserProfile(userId: string, data: Partial<UserProfile>): Promise<{ profile: UserProfile }> {
-    return this.put(`/users/${userId}/profile`, data)
-  }
-
-  static async deleteUser(id: string): Promise<ApiResponse<any>> {
-    return this.delete(`/users/${id}`)
-  }
-
-  static async inviteUser(email: string, name: string, role: UserRole, companyId: string): Promise<{ user: SafeUserWithProfile }> {
-    return this.post('/users/invite', { email, name, role, company_id: companyId })
-  }
-
-  // ============================================================================
-  // DEPARTMENT METHODS (Company-specific)
-  // ============================================================================
-
-  static async getDepartments(companyId?: string): Promise<{ departments: Department[] }> {
-    const endpoint = companyId ? `/departments?company_id=${companyId}` : '/departments'
-    return this.get(endpoint)
-  }
-
-  static async createDepartment(data: Partial<Department>): Promise<{ department: Department }> {
-    return this.post('/departments', data)
-  }
-
-  static async updateDepartment(id: string, data: Partial<Department>): Promise<{ department: Department }> {
-    return this.put(`/departments/${id}`, data)
-  }
-
-  static async deleteDepartment(id: string): Promise<ApiResponse<any>> {
-    return this.delete(`/departments/${id}`)
-  }
-
-  // ============================================================================
-  // SURVEY METHODS (Company-specific)
-  // ============================================================================
-
-  static async getSurveys(companyId?: string): Promise<SurveyListResponse> {
-    const endpoint = companyId ? `/surveys?company_id=${companyId}` : '/surveys'
-    return this.get(endpoint)
-  }
-
-  static async getSurvey(id: string): Promise<SurveyDetailResponse> {
-    return this.get(`/surveys/${id}`)
-  }
-
-  static async createSurvey(data: Partial<Survey>): Promise<{ survey: Survey }> {
-    return this.post('/surveys', data)
-  }
-
-  static async updateSurvey(id: string, data: Partial<Survey>): Promise<{ survey: Survey }> {
-    return this.put(`/surveys/${id}`, data)
-  }
-
-  static async deleteSurvey(id: string): Promise<ApiResponse<any>> {
-    return this.delete(`/surveys/${id}`)
-  }
-
-  // ============================================================================
-  // SURVEY ASSIGNMENT METHODS
-  // ============================================================================
-
-  static async getAssignments(filters?: {
-    user_id?: string
-    survey_id?: string
-    status?: AssignmentStatus
-    company_id?: string
-  }): Promise<AssignmentsResponse> {
-    const params = new URLSearchParams()
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.append(key, value)
-      })
-    }
-    const endpoint = `/survey-assignments${params.toString() ? `?${params.toString()}` : ''}`
-    return this.get(endpoint)
-  }
-
-  static async createAssignment(data: {
-    survey_id: string
-    user_ids: string[]
-    notes?: string
-    due_date?: string
-  }): Promise<{ assignments: SurveyAssignment[]; count: number }> {
-    return this.post('/survey-assignments', data)
-  }
-
-  static async updateAssignment(id: string, data: Partial<SurveyAssignment>): Promise<{ assignment: SurveyAssignment }> {
-    return this.put(`/survey-assignments/${id}`, data)
-  }
-
-  static async deleteAssignment(id: string): Promise<ApiResponse<any>> {
-    return this.delete(`/survey-assignments/${id}`)
-  }
-
-  static async requestRefillFromAssignment(assignmentId: string, reason?: string): Promise<{ assignment: SurveyAssignment }> {
-    return this.patch(`/survey-assignments/${assignmentId}`, { reason })
-  }
-
-  // ============================================================================
-  // SURVEY RESPONSE METHODS
-  // ============================================================================
-
-  static async submitResponse(data: {
-    survey_id: string
-    user_id: string
-    assignment_id: string
-    responses: FormResponses
-    completion_time_minutes?: number
-    is_refill?: boolean
-    response_attempt?: number
-  }): Promise<ApiResponse<any>> {
-    return this.post('/responses', data)
-  }
-
-  static async getResponses(surveyId: string, companyId?: string): Promise<{ responses: SurveyResponse[] }> {
-    const params = companyId ? `?company_id=${companyId}` : ''
-    return this.get(`/surveys/${surveyId}/responses${params}`)
-  }
-
-  // ============================================================================
-  // SURVEY REFILL METHODS
-  // ============================================================================
-
-  static async requestRefill(surveyId: string, data: {
-    user_id?: string
-    assignment_id?: string
-    reason?: string
-    admin_notes?: string
-  }): Promise<{ 
-    message: string
-    survey_id: string
-    user_id: string
-    attempt_number: number
-    status: string
-    timestamp: string
-  }> {
-    return this.post(`/surveys/${surveyId}/refill`, data)
-  }
-
-  static async getRefillHistory(surveyId: string, userId?: string): Promise<{
-    survey_id: string
-    user_id: string
-    total_attempts: number
-    refill_attempts: number
-    responses: any[]
-    refill_comments: any[]
-  }> {
-    const params = userId ? `?user_id=${userId}` : ''
-    return this.get(`/surveys/${surveyId}/refill${params}`)
-  }
-
-  // ============================================================================
-  // COMMENT METHODS
-  // ============================================================================
-
-  static async getComments(filters: {
-    survey_id: string
-    assignment_id?: string | null
-    user_id?: string
-  }): Promise<CommentsResponse> {
-    const params = new URLSearchParams()
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) params.append(key, value)
-    })
-    return this.get(`/comments?${params.toString()}`)
-  }
-
-  static async createComment(data: {
-    survey_id: string
-    assignment_id?: string | null
-    recipient_id?: string
-    comment_text: string
-    comment_type?: CommentType
-    parent_comment_id?: string
-  }): Promise<{ comment: CommentWithUser }> {
-    return this.post('/comments', data)
-  }
-
-  static async markCommentAsRead(id: string): Promise<{ comment: SurveyComment }> {
-    return this.patch(`/comments/${id}`, {})
-  }
-
-  static async deleteComment(id: string): Promise<ApiResponse<any>> {
-    return this.delete(`/comments/${id}`)
-  }
-
-  // ============================================================================
-  // ANALYTICS METHODS
-  // ============================================================================
-
-  static async getAnalytics(surveyId: string, companyId?: string): Promise<AnalyticsResponse> {
-    const params = companyId ? `?company_id=${companyId}` : ''
-    return this.get(`/analytics/${surveyId}${params}`)
-  }
-
-  static async getCompanyAnalytics(companyId: string): Promise<{
-    total_surveys: number
-    total_users: number
-    total_responses: number
-    completion_rate: number
-  }> {
-    return this.get(`/analytics/company/${companyId}`)
-  }
-
-  // ============================================================================
-  // SECTION & QUESTION METHODS (existing, for compatibility)
-  // ============================================================================
-
-  static async createSection(data: Partial<SurveySection>): Promise<{ section: SurveySection }> {
-    return this.post('/sections', data)
-  }
-
-  static async updateSection(id: string, data: Partial<SurveySection>): Promise<{ section: SurveySection }> {
-    return this.put(`/sections/${id}`, data)
-  }
-
-  static async deleteSection(id: string): Promise<ApiResponse<any>> {
-    return this.delete(`/sections/${id}`)
-  }
-
-  static async createQuestion(data: Partial<Question> & { options?: string[] }): Promise<{ question: Question }> {
-    return this.post('/questions', data)
-  }
-
-  static async updateQuestion(id: string, data: Partial<Question> & { options?: string[] }): Promise<{ question: Question }> {
-    return this.put(`/questions/${id}`, data)
-  }
-
-  static async deleteQuestion(id: string): Promise<ApiResponse<any>> {
-    return this.delete(`/questions/${id}`)
+  
+  container.addEventListener('keydown', handleTabKey)
+  
+  // Return cleanup function
+  return () => {
+    container.removeEventListener('keydown', handleTabKey)
   }
 }

@@ -1,5 +1,7 @@
 // lib/auth.ts - Simple Authentication System (No Bcrypt)
-import { UserWithProfile, UserRole } from './utils'
+
+import { UserWithProfile, UserRole } from "./types"
+
 
 // ============================================================================
 // CONSTANTS
