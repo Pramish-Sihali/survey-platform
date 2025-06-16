@@ -9,7 +9,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
-import { ApiClient, AnalyticsResponse, Survey } from '@/lib/utils'
+
+import { AuthenticatedLayout } from '@/components/layouts/AuthenticatedLayout'
+import { AuthService } from '@/lib/auth'
+import { Survey, ApiClient ,  UserWithProfile,  AnalyticsResponse  } from '@/lib/utils'
 import { CombinedAuditInterface } from '@/components/admin/CombinedAuditInterface'
 import { AuditAnalyticsComparison } from '@/components/admin/AuditAnalyticsComparison'
 
@@ -25,6 +28,27 @@ export default function IndividualSurveyAnalyticsPage() {
   const [error, setError] = useState<string | null>(null)
   const [departmentFilter, setDepartmentFilter] = useState('all')
   const [activeTab, setActiveTab] = useState<'analytics' | 'audit' | 'audit-analytics'>('analytics')
+
+      // ✅ User state for the layout
+      const [user, setUser] = useState<UserWithProfile | null>(null)
+      const [isLoadingUser, setIsLoadingUser] = useState(true)
+    
+      // ✅ Get user for the layout
+      useEffect(() => {
+        const getUser = async () => {
+          try {
+            const currentUser = await AuthService.getCurrentUser()
+            setUser(currentUser)
+          } catch (error) {
+            console.error('Error getting user:', error)
+          } finally {
+            setIsLoadingUser(false)
+          }
+        }
+        getUser()
+      }, [])
+
+      
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -101,6 +125,23 @@ export default function IndividualSurveyAnalyticsPage() {
     )
   }
 
+      // ✅ Show loading while getting user
+      if (isLoadingUser) {
+        return (
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-8 h-8 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading...</p>
+            </div>
+          </div>
+        )
+      }
+    
+      // ✅ Handle user not found
+      if (!user) {
+        return <div>Error loading user</div>
+      }
+
   if (error || !analytics) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
@@ -138,6 +179,7 @@ export default function IndividualSurveyAnalyticsPage() {
     : analytics.departments.filter(dept => dept.name === departmentFilter)
 
   return (
+    <AuthenticatedLayout user={user}>
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
       {/* Navigation */}
       <nav className="border-b bg-background/80 backdrop-blur-sm">
@@ -481,5 +523,6 @@ export default function IndividualSurveyAnalyticsPage() {
         )}
       </div>
     </div>
+    </AuthenticatedLayout>
   )
 }

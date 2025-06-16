@@ -82,7 +82,7 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
           {/* Mobile close button */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 lg:hidden">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+              <div className="w-8 h-8 bg-teal-500 rounded-md flex items-center justify-center">
                 <span className="text-white font-bold">i</span>
               </div>
               <span className="font-bold text-gray-900">IXIcorp</span>
@@ -102,7 +102,7 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
             </div>
             <div>
               <h1 className="text-lg font-bold text-gray-900">
-                <span className="text-yellow-600">IXI</span>corp Survey
+                <span className="text-teal-600">IXI</span>corp Survey
               </h1>
               <p className="text-xs text-gray-500">
                 {user.role === 'super_admin' ? 'Super Admin' : 

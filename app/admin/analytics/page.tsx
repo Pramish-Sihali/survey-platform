@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { ArrowLeft, BarChart3, Users, TrendingUp, AlertCircle, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { Survey, ApiClient } from '@/lib/utils'
+import { AuthenticatedLayout } from '@/components/layouts/AuthenticatedLayout'
+import { AuthService } from '@/lib/auth'
+import { Survey, ApiClient ,  UserWithProfile  } from '@/lib/utils'
 
 interface OverviewStats {
   totalSurveys: number
@@ -25,6 +26,26 @@ export default function AdminAnalyticsPage() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+
+    // ✅ User state for the layout
+    const [user, setUser] = useState<UserWithProfile | null>(null)
+    const [isLoadingUser, setIsLoadingUser] = useState(true)
+  
+    // ✅ Get user for the layout
+    useEffect(() => {
+      const getUser = async () => {
+        try {
+          const currentUser = await AuthService.getCurrentUser()
+          setUser(currentUser)
+        } catch (error) {
+          console.error('Error getting user:', error)
+        } finally {
+          setIsLoadingUser(false)
+        }
+      }
+      getUser()
+    }, [])
 
   useEffect(() => {
     const fetchAnalyticsData = async () => {
@@ -64,6 +85,23 @@ export default function AdminAnalyticsPage() {
 
     fetchAnalyticsData()
   }, [])
+
+    // ✅ Show loading while getting user
+    if (isLoadingUser) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      )
+    }
+  
+    // ✅ Handle user not found
+    if (!user) {
+      return <div>Error loading user</div>
+    }
 
   if (loading) {
     return (
@@ -126,15 +164,13 @@ export default function AdminAnalyticsPage() {
   }
 
   return (
+    <AuthenticatedLayout user={user}>
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
       {/* Navigation */}
       <nav className="border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center space-x-4">
-            <Link href="/admin" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-5 w-5" />
-              <span className="text-sm">Back to Dashboard</span>
-            </Link>
+            
             <div className="flex items-center space-x-2">
               <BarChart3 className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold text-foreground">Analytics Overview</span>
@@ -310,5 +346,6 @@ export default function AdminAnalyticsPage() {
         </Card>
       </div>
     </div>
+    </AuthenticatedLayout>
   )
 }
